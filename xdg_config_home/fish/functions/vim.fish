@@ -1,3 +1,7 @@
 function vim
-	nvim  $argv;
+    if type -q nvim
+        nvim  $argv
+    else
+        vim $argv
+    end
 end

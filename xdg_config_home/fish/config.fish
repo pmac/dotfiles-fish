@@ -28,7 +28,7 @@ add_user_path "$HOME/emsdk_portable/emscripten/incoming"
 
 # Golang
 add_user_path "$HOME/.gocode/bin"
-for DIR in "$HOME/.gocode" "$HOME/Projects/LetsAuth/gocode"
+for DIR in "$HOME/.gocode" "$HOME/Projects/Portier/gocode"
     if test -d $DIR
         set -x GOPATH "$GOPATH:$DIR"
     end

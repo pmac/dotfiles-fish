@@ -50,7 +50,7 @@ function fish_prompt
 	end
 
 	# path
-	set prompt $prompt $_vbr_gray(pwd | sed "s:^$HOME:~:")
+	set prompt $prompt $_vbr_gray(prompt_pwd)
 
 	# Git
 	set prompt $prompt (__fish_git_prompt '%s')
