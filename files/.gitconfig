@@ -1,6 +1,7 @@
 [user]
     name = Dan Callahan
     email = dan.callahan@gmail.com
+    signingKey = 7AA5DAD1C95640B8DE88D4AF8D6DD713E9EBA7FD
 [alias]
     ci = commit
     st = status
@@ -10,3 +11,7 @@
     precomposeUnicode = true
 [push]
     default = simple
+[commit]
+    gpgSign = true
+[gpg]
+    program = gpg2
