@@ -15,6 +15,9 @@ function add_user_path --description='Helper for modifying $PATH'
     end
 end
 
+# Ruby / Other Local Binaries
+add_user_path "$HOME/bin"
+
 # Rust / Cargo
 add_user_path "$HOME/.cargo/bin"
 
@@ -28,9 +31,10 @@ add_user_path "$HOME/emsdk_portable/emscripten/incoming"
 
 # Golang
 add_user_path "$HOME/.gocode/bin"
-for DIR in "$HOME/.gocode" "$HOME/Projects/Portier/gocode"
-    if test -d $DIR
-        set -x GOPATH "$GOPATH:$DIR"
+for dir in "$HOME/.gocode" "$HOME/Projects/Portier/gocode"
+    set -l dirs (string split : $GOPATH)
+    if test -d $dir; and not contains $dir $dirs
+        set -x GOPATH (string join : $dirs $dir)
     end
 end
 
@@ -45,8 +49,11 @@ if test (uname -s) = 'Darwin'; and type -q brew
     end
 end
 
+
 set fish_key_bindings fish_vi_key_bindings
 
+# Prompt customization
+set -x VIRTUAL_ENV_DISABLE_PROMPT 1
 set theme_date_format "+%H:%M:%S"
 set theme_display_vi "yes"
 set theme_display_vi_hide_mode "insert"
