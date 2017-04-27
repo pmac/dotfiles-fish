@@ -7,6 +7,9 @@ call plug#begin('~/.vim/plugged')
         let g:lucius_style = 'dark'
         let g:lucius_contrast = 'low'
         let g:lucius_contrast_bg = 'high'
+    Plug 'https://bitbucket.org/kisom/eink.vim.git'
+    Plug 'robertmeta/nofrils'
+    Plug 'ggustafsson/Static-Color-Scheme'
 
     " Editing Behavior
     Plug 'editorconfig/editorconfig-vim'
