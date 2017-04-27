@@ -113,6 +113,16 @@ call plug#begin('~/.vim/plugged')
     "Plug 'tpope/vim-fugitive'
     "Plug 'gregsexton/gitv'
     "Plug 'airblade/vim-gitgutter'
+
+    " -- Wiki / Taskwarrior Integration --
+
+    Plug 'vimwiki/vimwiki', { 'branch': 'dev' }
+        let g:vimwiki_auto_chdir = 1
+    Plug 'tbabej/taskwiki'
+        let g:taskwiki_disable_concealcursor = 'yes'
+    Plug 'powerman/vim-plugin-AnsiEsc'
+    Plug 'blindFS/vim-taskwarrior'
+
 call plug#end()
 
 " Appearance
