@@ -43,6 +43,8 @@ call plug#begin('~/.vim/plugged')
 
         let g:neomake_python_pylama_args = ["--linters", "pyflakes,pep8,pydocstyle,mccabe", "--ignore", "D213"]
         let g:neomake_sh_shellcheck_args = ["-f", "gcc", "-x"]
+    Plug 'fmoralesc/vim-pad'
+        let g:pad#dir = '~/.vim-pad'
 
     " File Types
     " See sheerun/vim-polyglot for more suggestions
