@@ -42,22 +42,23 @@ call plug#begin('~/.vim/plugged')
     Plug 'cespare/vim-toml'
     Plug 'fatih/vim-go'
         let g:go_fmt_fail_silently = 1
+        au BufRead,BufNewFile *.sigil setlocal filetype=gotexttmpl
     Plug 'hail2u/vim-css3-syntax'
+        au BufRead,BufNewFile *.css setlocal filetype=scss
+    Plug 'hdima/python-syntax'
+    Plug 'hynek/vim-python-pep8-indent'
     Plug 'kballard/vim-fish'
     Plug 'lambdatoast/elm.vim'
-    Plug 'mitsuhiko/vim-python-combined'
     Plug 'othree/yajs.vim'
     Plug 'othree/es.next.syntax.vim'
     Plug 'lambdatoast/elm.vim'
     Plug 'othree/html5.vim'
     Plug 'plasticboy/vim-markdown'
     Plug 'raichoo/purescript-vim'
-    "Plug 'rust-lang/rust.vim'
-    "Revert to upstream after https://github.com/rust-lang/rust.vim/pull/76
-    Plug 'somini/rust.vim'
-        let g:rustc_syntax_only = 0
+    Plug 'rust-lang/rust.vim'
     Plug 'tpope/vim-git'
     Plug 'vimoutliner/vimoutliner'
+    Plug 'yosssi/vim-ace'
 
     " == Still Evaluating ==
 
