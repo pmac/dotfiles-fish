@@ -29,6 +29,9 @@ call plug#begin('~/.vim/plugged')
     Plug 'scrooloose/nerdtree'
         map <leader>f :NERDTreeToggle<CR>
         let g:NERDTreeRespectWildIgnore = 1
+    Plug 'majutsushi/tagbar'
+        map <leader>t :TagbarToggle<CR>
+
     Plug 'neomake/neomake'
         au BufWritePost * Neomake
         let g:neomake_open_list = 2
