@@ -176,7 +176,18 @@ set wildignore+=[Tt]humbs.db
 set wildignore+=*.6
 
 " Misc
-au FileType markdown,text setlocal spell
+au FileType markdown,text setlocal spell textwidth=0 linebreak
+au FileType markdown,text nnoremap j gj
+au FileType markdown,text nnoremap gj j
+au FileType markdown,text nnoremap k gk
+au FileType markdown,text nnoremap gk k
+au FileType markdown,text nnoremap $ g$
+au FileType markdown,text nnoremap g$ $
+au FileType markdown,text nnoremap ^ g^
+au FileType markdown,text nnoremap g^ ^
+au FileType markdown,text nnoremap 0 g0
+au FileType markdown,text nnoremap g0 0
+au FileType mail setlocal formatoptions+=aw textwidth=72 colorcolumn=+1 spell nomodeline
 au FileType votl,go,make setlocal nolist
 au FileType gitcommit setlocal colorcolumn+=51
 au FileType javascript setlocal foldmethod=syntax foldlevelstart=1 |
