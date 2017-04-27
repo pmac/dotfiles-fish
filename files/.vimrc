@@ -31,11 +31,15 @@ call plug#begin('~/.vim/plugged')
         let g:NERDTreeRespectWildIgnore = 1
     Plug 'neomake/neomake'
         au BufWritePost * Neomake
-        let g:neomake_open_list = 0
+        let g:neomake_open_list = 2
+        let g:neomake_list_height = 7
         let g:neomake_error_sign = {'text': '✖', 'texthl': 'ErrorMsg'}
         let g:neomake_warning_sign = {'text': '❢', 'texthl': 'WarningMsg'}
         let g:neomake_message_sign = {'text': '➤', 'texthl': 'MoreMsg'}
         let g:neomake_info_sign = {'text': 'ℹ', 'texthl': 'ModeMsg'}
+
+        let g:neomake_python_pylama_args = ["--linters", "pyflakes,pep8,pydocstyle,mccabe", "--ignore", "D213"]
+        let g:neomake_sh_shellcheck_args = ["-f", "gcc", "-x"]
 
     " File Types
     " See sheerun/vim-polyglot for more suggestions
