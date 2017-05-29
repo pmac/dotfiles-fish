@@ -1,60 +1,57 @@
 #!/bin/sh
 
-OLDPWD=$PWD
-CONFIGHOME="${XDG_CONFIG_HOME:=$HOME/.config}"
+# --- Functions ---
+# Check if any existing physical directories would be clobbered
+check() {
+    if [ ! -d "$2" ]; then
+        echo "Creating directory: $2"
+        mkdir -p "$2"
+    fi
 
+    for file in $1; do
+        target="$2/$(basename "$file")"
+        if [ -e "$target" ] && [ ! -L "$target" ]; then
+            if [ "$CONFLICTS" -eq 0 ]; then
+                echo "Error: Please remove the following files / directories:"
+                CONFLICTS=1
+            fi
+            echo "    $target"
+        fi
+    done
+}
+
+# Link configuration files
+link() {
+    for file in $1; do
+        target="$2/$(basename "$file")"
+        if [ -L "$target" ]; then
+            # Replace symlinks without confirmation
+            lnopts="-vsnf"
+        else
+            # Prompt the user when replacing real files
+            lnopts="-vsni"
+        fi
+        ln $lnopts "${PWD}/$file" "$target"
+    done
+}
+
+# --- Main Script ---
+OLDPWD="$PWD"
 cd "$(dirname "$0")" || exit 2
 
-# Ask user to remove any physical directories before linking
-FLAG=0
-for f in ./files/.[A-z]*; do
-    if [ -d "$HOME/$(basename "$f")" ] && [ ! -L "$HOME/$(basename "$f")" ]; then
-        if [ $FLAG -eq 0 ]; then
-            echo "Please remove:"
-        fi
-        echo "$HOME/$(basename "$f")"
-        FLAG=1
-    fi
-done
+CONFLICTS=0
+check "dotfiles/.[A-z]*" "${HOME}"
+check "xdg_config_home/*" "${XDG_CONFIG_HOME:=$HOME/.config}"
+check "local_bin/*" "${HOME}/.local/bin"
 
-for f in ./xdg_config_home/*; do
-    if [ -d "$CONFIGHOME/$(basename "$f")" ] && [ ! -L "$CONFIGHOME/$(basename "$f")" ]; then
-        if [ $FLAG -eq 0 ]; then
-            echo "Please remove:"
-        fi
-        echo "$CONFIGHOME/$(basename "$f")"
-        FLAG=1
-    fi
-done
-
-# Bail if any physical directories were present
-if [ $FLAG -ne 0 ]; then
-    echo "Then re-run this script to install symlinks."
+if [ "$CONFLICTS" -ne 0 ]; then
+    echo "Exiting"
     cd "$OLDPWD" || exit 2
     exit 1
 fi
 
-# Link the dotfiles
-for f in ./files/.[A-z]*; do
-    # Overwrite symlinks without asking for confirmation
-    if [ -L "$HOME/$(basename "$f")" ]; then
-        LNOPTS="-vsfn"
-    else
-        LNOPTS="-vsin"
-    fi
-    ln $LNOPTS "$PWD/files/$(basename "$f")" "$HOME/$(basename "$f")"
-done
-
-for f in ./xdg_config_home/*; do
-    # Overwrite symlinks without asking for confirmation
-    if [ -L "$CONFIGHOME/$(basename "$f")" ]; then
-        LNOPTS="-vsfn"
-    else
-        LNOPTS="-vsin"
-    fi
-    ln $LNOPTS "$PWD/xdg_config_home/$(basename "$f")" "$CONFIGHOME/$(basename "$f")"
-done
-
-# TODO: Neovim wants xsel and a python module installed. Check for and warn?
+link "dotfiles/.[A-z]*" "${HOME}"
+link "xdg_config_home/*" "${XDG_CONFIG_HOME:=$HOME/.config}"
+link "local_bin/*" "${HOME}/.local/bin"
 
 cd "$OLDPWD" || exit 2
