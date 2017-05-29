@@ -11,6 +11,8 @@
     precomposeUnicode = true
 [push]
     default = simple
+[diff]
+    indentHeuristic = true
 [commit]
     gpgSign = true
 [gpg]
