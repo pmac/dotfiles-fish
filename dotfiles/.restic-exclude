@@ -1,0 +1,40 @@
+# Caches and trash
+.cache/
+.local/share/Trash/
+.thumbnails/
+
+# SCMs I don't directly interact with
+.bazaar/
+.subversion/
+
+# Junk from language / build / packaging tools
+**/node_modules/
+.cargo/
+.elm/
+.emscripten_cache/
+.emscripten_ports/
+.gem/
+.ghc/
+.java/
+.lein/
+.mono/
+.multirust/
+.node-gyp/
+.npm/
+.purescript/
+.python-eggs/
+.rustup/
+.stack/
+
+# App detritus
+.android/
+.gimp-2.8/
+.ipython/
+.links/
+.pylint.d/
+.sane/
+.snes9x/
+.texlive2014/
+.w3m/
+.yEd/
+target/
