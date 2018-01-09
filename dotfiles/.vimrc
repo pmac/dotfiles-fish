@@ -104,14 +104,15 @@ call plug#begin('~/.vim/plugged')
     " -- File / Filename Searching --
 
     Plug 'mileszs/ack.vim'
-        if executable('ag')
-            let g:ackprg = 'ag --vimgrep'
+        if executable('rg')
+            let g:ackprg = 'rg --vimgrep'
         endif
 
     Plug 'ctrlpvim/ctrlp.vim'
-        if executable('ag')
-            let g:ctrlp_user_command = 'ag -l --nocolor -g "" %s'
-            let g:ctrlp_use_caching = 0
+        if executable('rg')
+          set grepprg=rg\ --color=never
+          let g:ctrlp_user_command = 'rg %s --files --color=never --glob ""'
+          let g:ctrlp_use_caching = 0
         endif
 
     "Plug 'Shougo/unite.vim'
