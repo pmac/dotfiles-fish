@@ -32,19 +32,22 @@ call plug#begin('~/.vim/plugged')
     Plug 'majutsushi/tagbar'
         map <leader>t :TagbarToggle<CR>
 
-    Plug 'neomake/neomake'
-        au BufWritePost * Neomake
-        let g:neomake_open_list = 2
-        let g:neomake_list_height = 7
-        let g:neomake_error_sign = {'text': '✖', 'texthl': 'ErrorMsg'}
-        let g:neomake_warning_sign = {'text': '❢', 'texthl': 'WarningMsg'}
-        let g:neomake_message_sign = {'text': '➤', 'texthl': 'MoreMsg'}
-        let g:neomake_info_sign = {'text': 'ℹ', 'texthl': 'ModeMsg'}
-
-        let g:neomake_python_pylama_args = ["--linters", "pyflakes,pep8,pydocstyle,mccabe", "--ignore", "D213"]
-        let g:neomake_sh_shellcheck_args = ["-f", "gcc", "-x"]
     Plug 'fmoralesc/vim-pad'
         let g:pad#dir = '~/.vim-pad'
+    " Plug 'neomake/neomake'
+    "     " No auto-make until https://github.com/neomake/neomake/issues/1216
+    "     " au BufWritePost * Neomake
+    "     let g:neomake_open_list = 2
+    "     let g:neomake_list_height = 7
+    "     let g:neomake_error_sign = {'text': '✖', 'texthl': 'ErrorMsg'}
+    "     let g:neomake_warning_sign = {'text': '❢', 'texthl': 'WarningMsg'}
+    "     let g:neomake_message_sign = {'text': '➤', 'texthl': 'MoreMsg'}
+    "     let g:neomake_info_sign = {'text': 'ℹ', 'texthl': 'ModeMsg'}
+
+    "     let g:neomake_python_pylama_args = ["--linters", "pyflakes,pep8,pydocstyle,mccabe", "--ignore", "D213"]
+    "     let g:neomake_sh_shellcheck_args = ["-f", "gcc", "-x"]
+    "     let g:neomake_clippy_clippy_exe = 'clippy'
+    "     let g:neomake_clippy_clippy_args = ['+nightly', 'clippy', '--message-format=json', '--quiet', '--', '-W', 'clippy-pedantic']
 
     " File Types
     " See sheerun/vim-polyglot for more suggestions
@@ -78,28 +81,31 @@ call plug#begin('~/.vim/plugged')
     Plug 'simnalamburt/vim-mundo'
         nnoremap <leader>u :GundoToggle<CR>
     Plug 'junegunn/goyo.vim'
-    Plug 'ternjs/tern_for_vim', { 'do': 'npm install' }
     Plug 'tpope/vim-fireplace'
 
     " -- Completion --
-
-    " TODO: re-enable --clang-completer at some point
-    Plug 'Valloric/YouCompleteMe', { 'do': './install.py --tern-completer --gocode-completer --racer-completer' }
-        let g:ycm_rust_src_path = '/usr/local/src/rust/current/src'
-        let g:ycm_python_binary_path = '/usr/bin/python3'
-        let g:ycm_autoclose_preview_window_after_insertion = 1
-    Plug 'SirVer/ultisnips'
-    Plug 'honza/vim-snippets'
-    Plug 'ervandew/supertab'
-        " make YCM compatible with UltiSnips (using supertab)
-        let g:ycm_key_list_select_completion = ['<C-n>', '<Down>']
-        let g:ycm_key_list_previous_completion = ['<C-p>', '<Up>']
-        let g:SuperTabDefaultCompletionType = '<C-n>'
-
-        " better key bindings for UltiSnipsExpandTrigger
-        let g:UltiSnipsExpandTrigger = "<tab>"
-        let g:UltiSnipsJumpForwardTrigger = "<tab>"
-        let g:UltiSnipsJumpBackwardTrigger = "<s-tab>"
+    " Plug 'autozimu/LanguageClient-neovim', { 'do': ':UpdateRemotePlugins' }
+    "     nnoremap <silent> K :call LanguageClient_textDocument_hover()<CR>
+    "     nnoremap <silent> gd :call LanguageClient_textDocument_definition()<CR>
+    "     nnoremap <silent> <F2> :call LanguageClient_textDocument_rename()<CR>
+    "     let g:LanguageClient_autoStart = 1
+    "     let g:LanguageClient_serverCommands = {
+    "         \ 'rust': ['rustup', 'run', 'nightly', 'rls'],
+    "         \ }
+    "     let g:LanguageClient_diagnosticsDisplay = {
+    "         \ '1': { 'name': 'Error', 'texthl': 'ErrorMsg', 'signText': '✖', 'signTexthl': 'ErrorMsg'},
+    "         \ '2': { 'name': 'Warning', 'texthl': 'WarningMsg', 'signText': '❢', 'signTexthl': 'WarningMsg'},
+    "         \ '3': { 'name': 'Information', 'texthl': 'ModeMsg', 'signText': 'ℹ', 'signTexthl': 'ModeMsg'},
+    "         \ '4': { 'name': 'Hint', 'texthl': 'MoreMsg', 'signText': '➤', 'signTexthl': 'MoreMsg'},
+    "         \ }
+    " Plug 'Shougo/denite.nvim'
+    " Plug 'Shougo/neosnippet.vim'
+    " Plug 'Shougo/neosnippet-snippets'
+    " Plug 'honza/vim-snippets'
+    " Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+    "     let g:deoplete#enable_at_startup = 1
+    " Plug 'carlitux/deoplete-ternjs'
+    " Plug 'racer-rust/vim-racer'
 
     " -- File / Filename Searching --
 
@@ -114,13 +120,6 @@ call plug#begin('~/.vim/plugged')
           let g:ctrlp_user_command = 'rg %s --files --color=never --glob ""'
           let g:ctrlp_use_caching = 0
         endif
-
-    "Plug 'Shougo/unite.vim'
-    "    let g:unite_source_rec_async_command = ['ag', '--follow', '--vimgrep', '--hidden', '--ignore-case', '-g', '']
-    "    let g:unite_source_grep_command = 'ag'
-    "    let g:unite_source_grep_default_opts = '--vimgrep --hidden --smart-case'
-    "    let g:unite_source_grep_recursive_opt = 'j
-    "Plug 'Shougo/vimproc.vim', { 'do': 'make' }
 
     " -- Git integration --
 
