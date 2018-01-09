@@ -83,28 +83,37 @@ call plug#begin('~/.vim/plugged')
     Plug 'junegunn/goyo.vim'
 
     " -- Completion --
-    " Plug 'autozimu/LanguageClient-neovim', { 'do': ':UpdateRemotePlugins' }
-    "     nnoremap <silent> K :call LanguageClient_textDocument_hover()<CR>
-    "     nnoremap <silent> gd :call LanguageClient_textDocument_definition()<CR>
-    "     nnoremap <silent> <F2> :call LanguageClient_textDocument_rename()<CR>
-    "     let g:LanguageClient_autoStart = 1
-    "     let g:LanguageClient_serverCommands = {
-    "         \ 'rust': ['rustup', 'run', 'nightly', 'rls'],
-    "         \ }
-    "     let g:LanguageClient_diagnosticsDisplay = {
-    "         \ '1': { 'name': 'Error', 'texthl': 'ErrorMsg', 'signText': '✖', 'signTexthl': 'ErrorMsg'},
-    "         \ '2': { 'name': 'Warning', 'texthl': 'WarningMsg', 'signText': '❢', 'signTexthl': 'WarningMsg'},
-    "         \ '3': { 'name': 'Information', 'texthl': 'ModeMsg', 'signText': 'ℹ', 'signTexthl': 'ModeMsg'},
-    "         \ '4': { 'name': 'Hint', 'texthl': 'MoreMsg', 'signText': '➤', 'signTexthl': 'MoreMsg'},
-    "         \ }
+
+    " Popular LSP plugins: LanguageClient-neovim, vim-lsp, and vim-lsc
+    " Of those, LanguageClient-neovim seems to be the most mature
+
+    Plug 'autozimu/LanguageClient-neovim', { 'branch': 'next', 'do': 'bash install.sh' }
+        let g:LanguageClient_diagnosticsDisplay = {
+            \ '1': { 'name': 'Error', 'texthl': 'ErrorMsg', 'signText': '✖', 'signTexthl': 'ErrorMsg'},
+            \ '2': { 'name': 'Warning', 'texthl': 'WarningMsg', 'signText': '❢', 'signTexthl': 'WarningMsg'},
+            \ '3': { 'name': 'Information', 'texthl': 'ModeMsg', 'signText': 'ℹ', 'signTexthl': 'ModeMsg'},
+            \ '4': { 'name': 'Hint', 'texthl': 'MoreMsg', 'signText': '➤', 'signTexthl': 'MoreMsg'},
+            \ }
+        let g:LanguageClient_serverCommands = {
+            \ 'rust': ['rls', '+nightly'],
+            \ }
+
+        au FileType rust setlocal formatexpr=LanguageClient_textDocument_rangeFormatting()
+        nnoremap <silent> K :call LanguageClient_textDocument_hover()<CR>
+        nnoremap <silent> gd :call LanguageClient_textDocument_definition()<CR>
+        nnoremap <silent> <F2> :call LanguageClient_textDocument_rename()<CR>
+
+    " LanguageClient-neovim automagically integrates with NCM and Deoplete
+    " NCM seems to work better out-of-the-box, but only supports neovim
+
+    if has('nvim')
+        Plug 'roxma/nvim-completion-manager'
+    endif
+
     " Plug 'Shougo/denite.nvim'
     " Plug 'Shougo/neosnippet.vim'
     " Plug 'Shougo/neosnippet-snippets'
     " Plug 'honza/vim-snippets'
-    " Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-    "     let g:deoplete#enable_at_startup = 1
-    " Plug 'carlitux/deoplete-ternjs'
-    " Plug 'racer-rust/vim-racer'
 
     " -- File / Filename Searching --
 
