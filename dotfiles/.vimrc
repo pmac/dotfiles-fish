@@ -66,6 +66,8 @@ call plug#begin('~/.vim/plugged')
     Plug 'plasticboy/vim-markdown'
     Plug 'raichoo/purescript-vim'
     Plug 'rust-lang/rust.vim'
+        let g:rust_fold = 1
+        let g:rustfmt_autosave = 1
     Plug 'tpope/vim-git'
     Plug 'vimoutliner/vimoutliner'
     Plug 'yosssi/vim-ace'
