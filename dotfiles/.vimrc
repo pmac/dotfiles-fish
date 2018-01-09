@@ -79,7 +79,7 @@ call plug#begin('~/.vim/plugged')
     Plug 'junegunn/rainbow_parentheses.vim'
         au FileType lisp,clojure,scheme RainbowParentheses
     Plug 'simnalamburt/vim-mundo'
-        nnoremap <leader>u :GundoToggle<CR>
+        nnoremap <leader>u :MundoToggle<CR>
     Plug 'junegunn/goyo.vim'
 
     " -- Completion --
