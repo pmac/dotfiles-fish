@@ -23,40 +23,47 @@
 #     set -g theme_git_worktree_support yes
 #     set -g theme_display_vagrant yes
 #     set -g theme_display_docker_machine no
+#     set -g theme_display_k8s_context no
 #     set -g theme_display_hg yes
 #     set -g theme_display_virtualenv no
 #     set -g theme_display_ruby no
 #     set -g theme_display_user yes
-#     set -g theme_display_vi yes
-#     set -g theme_display_vi_hide_mode default
+#     set -g theme_display_hostname yes
+#     set -g theme_display_vi no
 #     set -g theme_avoid_ambiguous_glyphs yes
 #     set -g theme_powerline_fonts no
 #     set -g theme_nerd_fonts yes
 #     set -g theme_show_exit_status yes
 #     set -g default_user your_normal_user
 #     set -g theme_color_scheme dark
+#     set -g fish_prompt_pwd_dir_length 0
+#     set -g theme_project_dir_length 1
+#     set -g theme_newline_cursor yes
 
-# ===========================
+
+# ==============================
 # Helper methods
-# ===========================
+# ==============================
 
-# function __bobthefish_in_git -S -d 'Check whether pwd is inside a git repo'
-#   command which git > /dev/null ^&1
-#     and command git rev-parse --is-inside-work-tree >/dev/null ^&1
-# end
+function __bobthefish_basename -d 'basically basename, but faster'
+  string replace -r '^.*/' '' -- $argv
+end
 
-# function __bobthefish_in_hg -S -d 'Check whether pwd is inside a hg repo'
-#   command which hg > /dev/null ^&1
-#     and command hg stat > /dev/null ^&1
-# end
+function __bobthefish_dirname -d 'basically dirname, but faster'
+  string replace -r '/[^/]+/?$' '' -- $argv
+end
 
 function __bobthefish_git_branch -S -d 'Get the current git branch (or commitish)'
   set -l ref (command git symbolic-ref HEAD ^/dev/null)
-  if [ $status -gt 0 ]
-    set -l branch (command git show-ref --head -s --abbrev | head -n1 ^/dev/null)
-    set ref "$__bobthefish_detached_glyph $branch"
-  end
-  echo $ref | sed "s#refs/heads/#$__bobthefish_branch_glyph #"
+    and string replace 'refs/heads/' "$__bobthefish_branch_glyph " $ref
+    and return
+
+  set -l tag (command git describe --tags --exact-match ^/dev/null)
+    and echo "$__bobthefish_tag_glyph $tag"
+    and return
+
+  set -l branch (command git show-ref --head -s --abbrev | head -n1 ^/dev/null)
+  echo "$__bobthefish_detached_glyph $branch"
 end
 
 function __bobthefish_hg_branch -S -d 'Get the current hg branch'
@@ -66,11 +73,45 @@ function __bobthefish_hg_branch -S -d 'Get the current hg branch'
 end
 
 function __bobthefish_pretty_parent -S -a current_dir -d 'Print a parent directory, shortened to fit the prompt'
-  echo -n (dirname $current_dir) | sed -e 's#/private##' -e "s#^$HOME#~#" -e 's#/\(\.\{0,1\}[^/]\)\([^/]*\)#/\1#g' -e 's#/$##'
+  set -q fish_prompt_pwd_dir_length
+    or set -l fish_prompt_pwd_dir_length 1
+
+  # Replace $HOME with ~
+  set -l real_home ~
+  set -l parent_dir (string replace -r '^'"$real_home"'($|/)' '~$1' (__bobthefish_dirname $current_dir))
+
+  # Must check whether `$parent_dir = /` if using native dirname
+  if [ -z "$parent_dir" ]
+    echo -n /
+    return
+  end
+
+  if [ $fish_prompt_pwd_dir_length -eq 0 ]
+    echo -n "$parent_dir/"
+    return
+  end
+
+  string replace -ar '(\.?[^/]{'"$fish_prompt_pwd_dir_length"'})[^/]*/' '$1/' "$parent_dir/"
+end
+
+function __bobthefish_ignore_vcs_dir -d 'Check whether the current directory should be ignored as a VCS segment'
+  for p in $theme_vcs_ignore_paths
+    set ignore_path (realpath $p ^/dev/null)
+    switch $PWD/
+      case $ignore_path/\*
+        echo 1
+        return
+    end
+  end
 end
 
 function __bobthefish_git_project_dir -S -d 'Print the current git project base directory'
   [ "$theme_display_git" = 'no' ]; and return
+
+  set -q theme_vcs_ignore_paths
+    and [ (__bobthefish_ignore_vcs_dir) ]
+    and return
+
   if [ "$theme_git_worktree_support" != 'yes' ]
     command git rev-parse --show-toplevel ^/dev/null
     return
@@ -98,7 +139,7 @@ function __bobthefish_git_project_dir -S -d 'Print the current git project base 
       return
   end
 
-  set -l project_dir (dirname $git_dir)
+  set -l project_dir (__bobthefish_dirname $git_dir)
 
   switch $PWD/
     case $project_dir/\*
@@ -115,18 +156,34 @@ end
 
 function __bobthefish_hg_project_dir -S -d 'Print the current hg project base directory'
   [ "$theme_display_hg" = 'yes' ]; or return
+
+  set -q theme_vcs_ignore_paths
+    and [ (__bobthefish_ignore_vcs_dir) ]
+    and return
+
   set -l d $PWD
-  while not [ $d = / ]
+  # Must check whether `$d = /` if using native dirname
+  while not [ -z "$d" ]
     if [ -e $d/.hg ]
       command hg root --cwd "$d" ^/dev/null
       return
     end
-    set d (dirname $d)
+    set d (__bobthefish_dirname $d)
   end
 end
 
 function __bobthefish_project_pwd -S -a current_dir -d 'Print the working directory relative to project root'
-  echo "$PWD" | sed -e "s#$current_dir##g" -e 's#^/##'
+  set -q theme_project_dir_length
+    or set -l theme_project_dir_length 0
+
+  set -l project_dir (string replace -r '^'"$current_dir"'($|/)' '' $PWD)
+
+  if [ $theme_project_dir_length -eq 0 ]
+    echo -n $project_dir
+    return
+  end
+
+  string replace -ar '(\.?[^/]{'"$theme_project_dir_length"'})[^/]*/' '$1/' $project_dir
 end
 
 function __bobthefish_git_ahead -S -d 'Print the ahead/behind state for the current branch'
@@ -135,7 +192,30 @@ function __bobthefish_git_ahead -S -d 'Print the ahead/behind state for the curr
     return
   end
 
-  command git rev-list --left-right '@{upstream}...HEAD' ^/dev/null | awk '/>/ {a += 1} /</ {b += 1} {if (a > 0 && b > 0) nextfile} END {if (a > 0 && b > 0) print "±"; else if (a > 0) print "+"; else if (b > 0) print "-"}'
+  set -l ahead 0
+  set -l behind 0
+  for line in (command git rev-list --left-right '@{upstream}...HEAD' ^/dev/null)
+    switch "$line"
+      case '>*'
+        if [ $behind -eq 1 ]
+          echo '±'
+          return
+        end
+        set ahead 1
+      case '<*'
+        if [ $ahead -eq 1 ]
+          echo "$__bobthefish_git_plus_minus_glyph"
+          return
+        end
+        set behind 1
+    end
+  end
+
+  if [ $ahead -eq 1 ]
+    echo "$__bobthefish_git_plus_glyph"
+  else if [ $behind -eq 1 ]
+    echo "$__bobthefish_git_minus_glyph"
+  end
 end
 
 function __bobthefish_git_ahead_verbose -S -d 'Print a more verbose ahead/behind state for the current branch'
@@ -150,17 +230,18 @@ function __bobthefish_git_ahead_verbose -S -d 'Print a more verbose ahead/behind
     case '0 0' # equal to upstream
       return
     case '* 0' # ahead of upstream
-      echo "↑$ahead"
+      echo "$__bobthefish_git_ahead_glyph$ahead"
     case '0 *' # behind upstream
-      echo "↓$behind"
+      echo "$__bobthefish_git_behind_glyph$behind"
     case '*' # diverged from upstream
-      echo "↑$ahead↓$behind"
+      echo "$__bobthefish_git_ahead_glyph$ahead$__bobthefish_git_behind_glyph$behind"
   end
 end
 
-# ===========================
+
+# ==============================
 # Segment functions
-# ===========================
+# ==============================
 
 function __bobthefish_start_segment -S -d 'Start a prompt segment'
   set -l bg $argv[1]
@@ -169,8 +250,7 @@ function __bobthefish_start_segment -S -d 'Start a prompt segment'
   set -e argv[1]
 
   set_color normal # clear out anything bold or underline...
-  set_color -b $bg
-  set_color $fg $argv
+  set_color -b $bg $fg $argv
 
   switch "$__bobthefish_current_bg"
     case ''
@@ -210,98 +290,43 @@ function __bobthefish_path_segment -S -a current_dir -d 'Display a shortened for
       set directory '~'
     case '*'
       set parent    (__bobthefish_pretty_parent "$current_dir")
-      set parent    "$parent/"
-      set directory (basename "$current_dir")
+      set directory (__bobthefish_basename "$current_dir")
   end
 
   echo -n $parent
   set_color -b $segment_basename_color
   echo -ns $directory ' '
-  set_color normal
 end
 
 function __bobthefish_finish_segments -S -d 'Close open prompt segments'
-  if [ "$__bobthefish_current_bg" != '' ]
+  if [ -n "$__bobthefish_current_bg" ]
     set_color normal
     set_color $__bobthefish_current_bg
     echo -ns $__bobthefish_right_black_arrow_glyph ' '
   end
 
-  set __bobthefish_current_bg
-  set_color normal
-end
-
-
-# ===========================
-# Theme components
-# ===========================
-
-function __bobthefish_prompt_vagrant -S -d 'Display Vagrant status'
-  [ "$theme_display_vagrant" = 'yes' -a -f Vagrantfile ]; or return
-  if type -q VBoxManage
-    __bobthefish_prompt_vagrant_vbox
-  else if grep vmware_fusion Vagrantfile >/dev/null ^&1
-    __bobthefish_prompt_vagrant_vmware
-  end
-end
-
-function __bobthefish_vagrant_ids -S -d 'List Vagrant machine ids'
-  for file in .vagrant/machines/**/id
-    read id <$file
-    echo $id
-  end
-end
-
-function __bobthefish_prompt_vagrant_vbox -S -d 'Display VirtualBox Vagrant status'
-  set -l vagrant_status
-  for id in (__bobthefish_vagrant_ids)
-    set -l vm_status (VBoxManage showvminfo --machinereadable $id ^/dev/null | command grep 'VMState=' | tr -d '"' | cut -d '=' -f 2)
-    switch "$vm_status"
-      case 'running'
-        set vagrant_status "$vagrant_status$__bobthefish_vagrant_running_glyph"
-      case 'poweroff'
-        set vagrant_status "$vagrant_status$__bobthefish_vagrant_poweroff_glyph"
-      case 'aborted'
-        set vagrant_status "$vagrant_status$__bobthefish_vagrant_aborted_glyph"
-      case 'saved'
-        set vagrant_status "$vagrant_status$__bobthefish_vagrant_saved_glyph"
-      case 'stopping'
-        set vagrant_status "$vagrant_status$__bobthefish_vagrant_stopping_glyph"
-      case ''
-        set vagrant_status "$vagrant_status$__bobthefish_vagrant_unknown_glyph"
-    end
-  end
-  [ -z "$vagrant_status" ]; and return
-
-  __bobthefish_start_segment $__color_vagrant
-  echo -ns $vagrant_status ' '
-  set_color normal
-end
-
-function __bobthefish_prompt_vagrant_vmware -S -d 'Display VMWare Vagrant status'
-  set -l vagrant_status
-  for id in (__bobthefish_vagrant_ids)
-    if [ (pgrep -f "$id") ]
-      set vagrant_status "$vagrant_status$__bobthefish_vagrant_running_glyph"
+  if [ "$theme_newline_cursor" = 'yes' ]
+    echo -ens "\n"
+    set_color $fish_color_autosuggestion
+    if [ "$theme_powerline_fonts" = "no" ]
+      echo -ns '> '
     else
-      set vagrant_status "$vagrant_status$__bobthefish_vagrant_poweroff_glyph"
+      echo -ns "$__bobthefish_right_arrow_glyph "
     end
+  else if [ "$theme_newline_cursor" = 'clean' ]
+    echo -ens "\n"
   end
-  [ -z "$vagrant_status" ]; and return
 
-  __bobthefish_start_segment $__color_vagrant
-  echo -ns $vagrant_status ' '
   set_color normal
+  set __bobthefish_current_bg
 end
 
-function __bobthefish_prompt_docker -S -d 'Show docker machine name'
-    [ "$theme_display_docker_machine" = 'no' -o -z "$DOCKER_MACHINE_NAME" ]; and return
-    __bobthefish_start_segment $__color_vagrant
-    echo -ns $DOCKER_MACHINE_NAME ' '
-    set_color normal
-end
 
-function __bobthefish_prompt_status -S -a last_status -d 'Display symbols for a non zero exit status, root and background jobs'
+# ==============================
+# Status and input mode segments
+# ==============================
+
+function __bobthefish_prompt_status -S -a last_status -d 'Display flags for a non-zero exit status, root user, and background jobs'
   set -l nonzero
   set -l superuser
   set -l bg_jobs
@@ -310,189 +335,57 @@ function __bobthefish_prompt_status -S -a last_status -d 'Display symbols for a 
   [ $last_status -ne 0 ]
     and set nonzero $__bobthefish_nonzero_exit_glyph
 
-  # if superuser (uid == 0)
-  [ (id -u $USER) -eq 0 ]
+  # If superuser (uid == 0)
+  #
+  # Note that iff the current user is root and '/' is not writeable by root this
+  # will be wrong. But I can't think of a single reason that would happen, and
+  # this way is 99.5% faster to check it this way, so that's a tradeoff I'm
+  # willing to make.
+  [ -w / ]
+    and [ (id -u) -eq 0 ]
     and set superuser $__bobthefish_superuser_glyph
 
   # Jobs display
-  [ (jobs -l | wc -l) -gt 0 ]
+  jobs -p >/dev/null
     and set bg_jobs $__bobthefish_bg_job_glyph
 
   if [ "$nonzero" -o "$superuser" -o "$bg_jobs" ]
     __bobthefish_start_segment $__color_initial_segment_exit
     if [ "$nonzero" ]
-       set_color normal; set_color -b $__color_initial_segment_exit
+      set_color normal
+      set_color -b $__color_initial_segment_exit
       if [ "$theme_show_exit_status" = 'yes' ]
-      	echo -ns $last_status ' '
+        echo -ns $last_status ' '
       else
-      	echo -n $__bobthefish_nonzero_exit_glyph
+        echo -n $__bobthefish_nonzero_exit_glyph
       end
     end
 
     if [ "$superuser" ]
-      set_color normal; set_color -b $__color_initial_segment_su
+      set_color normal
+      if [ -z "$FAKEROOTKEY" ]
+        set_color -b $__color_initial_segment_su
+      else
+        set_color -b $__color_initial_segment_exit
+      end
+
       echo -n $__bobthefish_superuser_glyph
     end
 
     if [ "$bg_jobs" ]
-      set_color normal; set_color -b $__color_initial_segment_jobs
+      set_color normal
+      set_color -b $__color_initial_segment_jobs
       echo -n $__bobthefish_bg_job_glyph
     end
-
-    set_color normal
   end
-end
-
-function __bobthefish_prompt_user -S -d 'Display actual user if different from $default_user'
-  if [ "$theme_display_user" = 'yes' ]
-    if [ "$USER" != "$default_user" -o -n "$SSH_CLIENT" ]
-      __bobthefish_start_segment $__color_username
-      set -l IFS .
-      hostname | read -l hostname __
-      echo -ns (whoami) '@' $hostname ' '
-    end
-  end
-end
-
-function __bobthefish_prompt_hg -S -a current_dir -d 'Display the actual hg state'
-  set -l dirty (command hg stat; or echo -n '*')
-
-  set -l flags "$dirty"
-  [ "$flags" ]
-    and set flags ""
-
-  set -l flag_colors $__color_repo
-  if [ "$dirty" ]
-    set flag_colors $__color_repo_dirty
-  end
-
-  __bobthefish_path_segment $current_dir
-
-  __bobthefish_start_segment $flag_colors
-  echo -ns $__bobthefish_hg_glyph ' '
-
-  __bobthefish_start_segment $flag_colors
-  echo -ns (__bobthefish_hg_branch) $flags ' '
-  set_color normal
-
-  set -l project_pwd  (__bobthefish_project_pwd $current_dir)
-  if [ "$project_pwd" ]
-    if [ -w "$PWD" ]
-      __bobthefish_start_segment $__color_path
-    else
-      __bobthefish_start_segment $__color_path_nowrite
-    end
-
-    echo -ns $project_pwd ' '
-  end
-end
-
-function __bobthefish_prompt_git -S -a current_dir -d 'Display the actual git state'
-  set -l dirty   (command git diff --no-ext-diff --quiet --exit-code; or echo -n '*')
-  set -l staged  (command git diff --cached --no-ext-diff --quiet --exit-code; or echo -n '~')
-  set -l stashed (command git rev-parse --verify --quiet refs/stash >/dev/null; and echo -n '$')
-  set -l ahead   (__bobthefish_git_ahead)
-
-  set -l new ''
-  set -l show_untracked (command git config --bool bash.showUntrackedFiles)
-  if [ "$theme_display_git_untracked" != 'no' -a "$show_untracked" != 'false' ]
-    set new (command git ls-files --other --exclude-standard --directory --no-empty-directory)
-    if [ "$new" ]
-      if [ "$theme_avoid_ambiguous_glyphs" = 'yes' ]
-        set new '...'
-      else
-        set new '…'
-      end
-    end
-  end
-
-  set -l flags "$dirty$staged$stashed$ahead$new"
-  [ "$flags" ]
-    and set flags " $flags"
-
-  set -l flag_colors $__color_repo
-  if [ "$dirty" ]
-    set flag_colors $__color_repo_dirty
-  else if [ "$staged" ]
-    set flag_colors $__color_repo_staged
-  end
-
-  __bobthefish_path_segment $current_dir
-
-  __bobthefish_start_segment $flag_colors
-  echo -ns (__bobthefish_git_branch) $flags ' '
-  set_color normal
-
-  if [ "$theme_git_worktree_support" != 'yes' ]
-    set -l project_pwd (__bobthefish_project_pwd $current_dir)
-    if [ "$project_pwd" ]
-      if [ -w "$PWD" ]
-        __bobthefish_start_segment $__color_path
-      else
-        __bobthefish_start_segment $__color_path_nowrite
-      end
-
-      echo -ns $project_pwd ' '
-    end
-    return
-  end
-
-  set -l project_pwd (command git rev-parse --show-prefix ^/dev/null | sed -e 's#/$##')
-  set -l work_dir (command git rev-parse --show-toplevel ^/dev/null)
-
-  # only show work dir if it's a parent…
-  if [ "$work_dir" ]
-    switch $PWD/
-      case $work_dir/\*
-        set work_dir (echo $work_dir | sed -e "s#^$current_dir##")
-      case \*
-        set -e work_dir
-    end
-  end
-
-  if [ "$project_pwd" -o "$work_dir" ]
-    set -l colors $__color_path
-    if not [ -w "$PWD" ]
-      set colors $__color_path_nowrite
-    end
-
-    __bobthefish_start_segment $colors
-
-    # handle work_dir != project dir
-    if [ "$work_dir" ]
-      set -l work_parent (dirname $work_dir | sed -e 's#^/##')
-      if [ "$work_parent" ]
-        echo -n "$work_parent/"
-      end
-      set_color normal; set_color -b $__color_repo_work_tree
-      echo -n (basename $work_dir)
-      set_color normal; set_color --background $colors
-      [ "$project_pwd" ]
-        and echo -n '/'
-    end
-
-    echo -ns $project_pwd ' '
-  else
-    set project_pwd (echo $PWD | sed -e "s#^$current_dir##" -e 's#^/##')
-    if [ "$project_pwd" ]
-      set -l colors $color_path
-      if not [ -w "$PWD" ]
-        set colors $color_path_nowrite
-      end
-
-      __bobthefish_start_segment $colors
-
-      echo -ns $project_pwd ' '
-    end
-  end
-end
-
-function __bobthefish_prompt_dir -S -d 'Display a shortened form of the current directory'
-  __bobthefish_path_segment "$PWD"
 end
 
 function __bobthefish_prompt_vi -S -d 'Display vi mode'
-  [ "$theme_display_vi" = 'yes' -a "$fish_bind_mode" != "$theme_display_vi_hide_mode" ]; or return
+  [ "$theme_display_vi" != 'no' ]; or return
+  [ "$fish_key_bindings" = 'fish_vi_key_bindings' \
+    -o "$fish_key_bindings" = 'hybrid_bindings' \
+    -o "$fish_key_bindings" = 'fish_hybrid_key_bindings' \
+    -o "$theme_display_vi" = 'yes' ]; or return
   switch $fish_bind_mode
     case default
       __bobthefish_start_segment $__color_vi_mode_default
@@ -500,37 +393,165 @@ function __bobthefish_prompt_vi -S -d 'Display vi mode'
     case insert
       __bobthefish_start_segment $__color_vi_mode_insert
       echo -n 'I '
+    case replace_one replace-one
+      __bobthefish_start_segment $__color_vi_mode_insert
+      echo -n 'R '
     case visual
       __bobthefish_start_segment $__color_vi_mode_visual
       echo -n 'V '
   end
-  set_color normal
 end
 
-function __bobthefish_virtualenv_python_version -S -d 'Get current python version'
-  set -l python_version (readlink (which python))
-  [ -z "$python_version" ]
-    and set python_version (which python)
-  switch (basename "$python_version")
-    case 'python' 'python2*'
-      echo $__bobthefish_superscript_glyph[2]
-    case 'python3*'
-      echo $__bobthefish_superscript_glyph[3]
-    case 'pypy*'
-      echo $__bobthefish_pypy_glyph
+
+# ==============================
+# Container and VM segments
+# ==============================
+
+function __bobthefish_prompt_vagrant -S -d 'Display Vagrant status'
+  [ "$theme_display_vagrant" = 'yes' -a -f Vagrantfile ]; or return
+
+  # .vagrant/machines/$machine/$provider/id
+  for file in .vagrant/machines/*/*/id
+    read -l id <"$file"
+
+    if [ -n "$id" ]
+      switch "$file"
+        case '*/virtualbox/id'
+          __bobthefish_prompt_vagrant_vbox $id
+        case '*/vmware_fusion/id'
+          __bobthefish_prompt_vagrant_vmware $id
+        case '*/parallels/id'
+          __bobthefish_prompt_vagrant_parallels $id
+      end
+    end
   end
 end
 
-function __bobthefish_prompt_virtualfish -S -d "Display activated virtual environment (only for virtualfish, virtualenv's activate.fish changes prompt by itself)"
-  [ "$theme_display_virtualenv" = 'no' -o -z "$VIRTUAL_ENV" ]; and return
-  set -l version_glyph (__bobthefish_virtualenv_python_version)
-  if [ "$version_glyph" ]
-    __bobthefish_start_segment $__color_virtualfish
-    echo -ns $__bobthefish_virtualenv_glyph $version_glyph ' '
+function __bobthefish_prompt_vagrant_vbox -S -a id -d 'Display VirtualBox Vagrant status'
+  set -l vagrant_status
+  set -l vm_status (VBoxManage showvminfo --machinereadable $id ^/dev/null | command grep 'VMState=' | tr -d '"' | cut -d '=' -f 2)
+  switch "$vm_status"
+    case 'running'
+      set vagrant_status "$vagrant_status$__bobthefish_vagrant_running_glyph"
+    case 'poweroff'
+      set vagrant_status "$vagrant_status$__bobthefish_vagrant_poweroff_glyph"
+    case 'aborted'
+      set vagrant_status "$vagrant_status$__bobthefish_vagrant_aborted_glyph"
+    case 'saved'
+      set vagrant_status "$vagrant_status$__bobthefish_vagrant_saved_glyph"
+    case 'stopping'
+      set vagrant_status "$vagrant_status$__bobthefish_vagrant_stopping_glyph"
+    case ''
+      set vagrant_status "$vagrant_status$__bobthefish_vagrant_unknown_glyph"
   end
-  echo -ns (basename "$VIRTUAL_ENV") ' '
-  set_color normal
+  [ -z "$vagrant_status" ]; and return
+
+  __bobthefish_start_segment $__color_vagrant
+  echo -ns $vagrant_status ' '
 end
+
+function __bobthefish_prompt_vagrant_vmware -S -a id -d 'Display VMWare Vagrant status'
+  set -l vagrant_status
+  if [ (pgrep -f "$id") ]
+    set vagrant_status "$vagrant_status$__bobthefish_vagrant_running_glyph"
+  else
+    set vagrant_status "$vagrant_status$__bobthefish_vagrant_poweroff_glyph"
+  end
+  [ -z "$vagrant_status" ]; and return
+
+  __bobthefish_start_segment $__color_vagrant
+  echo -ns $vagrant_status ' '
+end
+
+function __bobthefish_prompt_vagrant_parallels -S -d 'Display Parallels Vagrant status'
+  set -l vagrant_status
+  set -l vm_status (prlctl list $id -o status ^/dev/null | command tail -1)
+  switch "$vm_status"
+    case 'running'
+      set vagrant_status "$vagrant_status$__bobthefish_vagrant_running_glyph"
+    case 'stopped'
+      set vagrant_status "$vagrant_status$__bobthefish_vagrant_poweroff_glyph"
+    case 'paused'
+      set vagrant_status "$vagrant_status$__bobthefish_vagrant_saved_glyph"
+    case 'suspended'
+      set vagrant_status "$vagrant_status$__bobthefish_vagrant_saved_glyph"
+    case 'stopping'
+      set vagrant_status "$vagrant_status$__bobthefish_vagrant_stopping_glyph"
+    case ''
+      set vagrant_status "$vagrant_status$__bobthefish_vagrant_unknown_glyph"
+  end
+  [ -z "$vagrant_status" ]; and return
+
+  __bobthefish_start_segment $__color_vagrant
+  echo -ns $vagrant_status ' '
+end
+
+function __bobthefish_prompt_docker -S -d 'Display Docker machine name'
+  [ "$theme_display_docker_machine" = 'no' -o -z "$DOCKER_MACHINE_NAME" ]; and return
+  __bobthefish_start_segment $__color_vagrant
+  echo -ns $DOCKER_MACHINE_NAME ' '
+end
+
+function __bobthefish_prompt_k8s_context -S -d 'Show current Kubernetes context'
+  [ "$theme_display_k8s_context" = 'no' ]; and return
+
+  set -l config_paths "$HOME/.kube/config"
+  [ -n "$KUBECONFIG" ]
+    and set config_paths (string split ':' "$KUBECONFIG") $config_paths
+
+  for file in $config_paths
+    [ -f "$file" ]; or continue
+
+    while read -l key val
+      if [ "$key" = 'current-context:' ]
+        __bobthefish_start_segment $__color_k8s
+        echo -ns $val ' '
+        return
+      end
+    end < $file
+  end
+end
+
+
+# ==============================
+# User / hostname info segments
+# ==============================
+
+function __bobthefish_prompt_user -S -d 'Display current user and hostname'
+  [ "$theme_display_user" = 'yes' -o -n "$SSH_CLIENT" -o \( -n "$default_user" -a "$USER" != "$default_user" \) ]
+    and set -l display_user
+  [ "$theme_display_hostname" = 'yes' -o -n "$SSH_CLIENT" ]
+    and set -l display_hostname
+
+  if set -q display_user
+    __bobthefish_start_segment $__color_username
+    echo -ns (whoami)
+  end
+
+  if set -q display_hostname
+    set -l IFS .
+    hostname | read -l hostname __
+    if set -q display_user
+      # reset colors without starting a new segment...
+      # (so we can have a bold username and non-bold hostname)
+      set_color normal
+      set_color -b $__color_hostname[1] $__color_hostname[2..-1]
+      echo -ns '@' $hostname
+    else
+      __bobthefish_start_segment $__color_hostname
+      echo -ns $hostname
+    end
+  end
+
+  set -q display_user
+    or set -q display_hostname
+    and echo -ns ' '
+end
+
+
+# ==============================
+# Virtual environment segments
+# ==============================
 
 function __bobthefish_rvm_parse_ruby -S -a ruby_string scope -d 'Parse RVM Ruby string'
   # Function arguments:
@@ -582,7 +603,9 @@ function __bobthefish_rvm_info -S -d 'Current Ruby information from RVM'
   end
 end
 
-function __bobthefish_show_ruby -S -d 'Current Ruby (rvm/rbenv)'
+function __bobthefish_prompt_rubies -S -d 'Display current Ruby information'
+  [ "$theme_display_ruby" = 'no' ]; and return
+
   set -l ruby_version
   if type -q rvm-prompt
     set ruby_version (__bobthefish_rvm_info)
@@ -592,39 +615,216 @@ function __bobthefish_show_ruby -S -d 'Current Ruby (rvm/rbenv)'
     set -q RBENV_ROOT
       or set -l RBENV_ROOT $HOME/.rbenv
 
-    read -l global_ruby_version <$RBENV_ROOT/version
+    [ -e "$RBENV_ROOT/version" ]
+      and read -l global_ruby_version <"$RBENV_ROOT/version"
 
     [ "$global_ruby_version" ]
-      or set global_ruby_version system
+      or set -l global_ruby_version system
 
     [ "$ruby_version" = "$global_ruby_version" ]; and return
   else if type -q chruby
     set ruby_version $RUBY_VERSION
+  else if type -q asdf
+    asdf current ruby ^/dev/null | read -l asdf_ruby_version asdf_provenance
+      or return
+
+    # If asdf changes their ruby version provenance format, update this to match
+    [ "$asdf_provenance" = "(set by $HOME/.tool-versions)" ]; and return
+
+    set ruby_version $asdf_ruby_version
   end
   [ -z "$ruby_version" ]; and return
   __bobthefish_start_segment $__color_rvm
   echo -ns $__bobthefish_ruby_glyph $ruby_version ' '
+end
+
+function __bobthefish_virtualenv_python_version -S -d 'Get current Python version'
+  switch (python --version ^| tr '\n' ' ')
+    case 'Python 2*PyPy*'
+      echo $__bobthefish_pypy_glyph
+    case 'Python 3*PyPy*'
+      echo -s $__bobthefish_pypy_glyph $__bobthefish_superscript_glyph[3]
+    case 'Python 2*'
+      echo $__bobthefish_superscript_glyph[2]
+    case 'Python 3*'
+      echo $__bobthefish_superscript_glyph[3]
+  end
+end
+
+function __bobthefish_prompt_virtualfish -S -d "Display current Python virtual environment (only for virtualfish, virtualenv's activate.fish changes prompt by itself)"
+  [ "$theme_display_virtualenv" = 'no' -o -z "$VIRTUAL_ENV" ]; and return
+  set -l version_glyph (__bobthefish_virtualenv_python_version)
+  if [ "$version_glyph" ]
+    __bobthefish_start_segment $__color_virtualfish
+    echo -ns $__bobthefish_virtualenv_glyph $version_glyph ' '
+  end
+  echo -ns (basename "$VIRTUAL_ENV") ' '
+end
+
+function __bobthefish_prompt_virtualgo -S -d 'Display current Go virtual environment'
+  [ "$theme_display_virtualgo" = 'no' -o -z "$VIRTUALGO" ]; and return
+  __bobthefish_start_segment $__color_virtualgo
+  echo -ns $__bobthefish_go_glyph
+  echo -ns (basename "$VIRTUALGO") ' '
   set_color normal
 end
 
-function __bobthefish_prompt_rubies -S -d 'Display current Ruby information'
-  [ "$theme_display_ruby" = 'no' ]; and return
-  __bobthefish_show_ruby
+
+# ==============================
+# VCS segments
+# ==============================
+
+function __bobthefish_prompt_hg -S -a current_dir -d 'Display the actual hg state'
+  set -l dirty (command hg stat; or echo -n '*')
+
+  set -l flags "$dirty"
+  [ "$flags" ]
+    and set flags ""
+
+  set -l flag_colors $__color_repo
+  if [ "$dirty" ]
+    set flag_colors $__color_repo_dirty
+  end
+
+  __bobthefish_path_segment $current_dir
+
+  __bobthefish_start_segment $flag_colors
+  echo -ns $__bobthefish_hg_glyph ' '
+
+  __bobthefish_start_segment $flag_colors
+  echo -ns (__bobthefish_hg_branch) $flags ' '
+  set_color normal
+
+  set -l project_pwd  (__bobthefish_project_pwd $current_dir)
+  if [ "$project_pwd" ]
+    if [ -w "$PWD" ]
+      __bobthefish_start_segment $__color_path
+    else
+      __bobthefish_start_segment $__color_path_nowrite
+    end
+
+    echo -ns $project_pwd ' '
+  end
 end
 
-# ===========================
+function __bobthefish_prompt_git -S -a current_dir -d 'Display the actual git state'
+  set -l dirty   (command git diff --no-ext-diff --quiet --exit-code ^/dev/null; or echo -n "$__bobthefish_git_dirty_glyph")
+  set -l staged  (command git diff --cached --no-ext-diff --quiet --exit-code ^/dev/null; or echo -n "$__bobthefish_git_staged_glyph")
+  set -l stashed (command git rev-parse --verify --quiet refs/stash >/dev/null; and echo -n "$__bobthefish_git_stashed_glyph")
+  set -l ahead   (__bobthefish_git_ahead)
+
+  set -l new ''
+  set -l show_untracked (command git config --bool bash.showUntrackedFiles ^/dev/null)
+  if [ "$theme_display_git_untracked" != 'no' -a "$show_untracked" != 'false' ]
+    set new (command git ls-files --other --exclude-standard --directory --no-empty-directory ^/dev/null)
+    if [ "$new" ]
+      set new "$__bobthefish_git_untracked_glyph"
+    end
+  end
+
+  set -l flags "$dirty$staged$stashed$ahead$new"
+  [ "$flags" ]
+    and set flags " $flags"
+
+  set -l flag_colors $__color_repo
+  if [ "$dirty" ]
+    set flag_colors $__color_repo_dirty
+  else if [ "$staged" ]
+    set flag_colors $__color_repo_staged
+  end
+
+  __bobthefish_path_segment $current_dir
+
+  __bobthefish_start_segment $flag_colors
+  echo -ns (__bobthefish_git_branch) $flags ' '
+  set_color normal
+
+  if [ "$theme_git_worktree_support" != 'yes' ]
+    set -l project_pwd (__bobthefish_project_pwd $current_dir)
+    if [ "$project_pwd" ]
+      if [ -w "$PWD" ]
+        __bobthefish_start_segment $__color_path
+      else
+        __bobthefish_start_segment $__color_path_nowrite
+      end
+
+      echo -ns $project_pwd ' '
+    end
+    return
+  end
+
+  set -l project_pwd (command git rev-parse --show-prefix ^/dev/null | string trim --right --chars=/)
+  set -l work_dir (command git rev-parse --show-toplevel ^/dev/null)
+
+  # only show work dir if it's a parent…
+  if [ "$work_dir" ]
+    switch $PWD/
+      case $work_dir/\*
+        string match "$current_dir*" $work_dir >/dev/null
+          and set work_dir (string sub -s (math 1 + (string length $current_dir)) $work_dir)
+      case \*
+        set -e work_dir
+    end
+  end
+
+  if [ "$project_pwd" -o "$work_dir" ]
+    set -l colors $__color_path
+    if not [ -w "$PWD" ]
+      set colors $__color_path_nowrite
+    end
+
+    __bobthefish_start_segment $colors
+
+    # handle work_dir != project dir
+    if [ "$work_dir" ]
+      set -l work_parent (__bobthefish_dirname $work_dir)
+      if [ "$work_parent" ]
+        echo -n "$work_parent/"
+      end
+      set_color normal
+      set_color -b $__color_repo_work_tree
+      echo -n (__bobthefish_basename $work_dir)
+      set_color normal
+      set_color -b $colors
+      [ "$project_pwd" ]
+        and echo -n '/'
+    end
+
+    echo -ns $project_pwd ' '
+  else
+    set project_pwd $PWD
+    string match "$current_dir*" $project_pwd >/dev/null
+      and set project_pwd (string sub -s (math 1 + (string length $current_dir)) $project_pwd)
+    set project_pwd (string trim --left --chars=/ -- $project_pwd)
+
+    if [ "$project_pwd" ]
+      set -l colors $__color_path
+      if not [ -w "$PWD" ]
+        set colors $__color_path_nowrite
+      end
+
+      __bobthefish_start_segment $colors
+
+      echo -ns $project_pwd ' '
+    end
+  end
+end
+
+function __bobthefish_prompt_dir -S -d 'Display a shortened form of the current directory'
+  __bobthefish_path_segment "$PWD"
+end
+
+
+# ==============================
 # Debugging functions
-# ===========================
+# ==============================
 
 function __bobthefish_display_colors -d 'Print example prompts using the current color scheme'
   set -g __bobthefish_display_colors
 end
 
 function __bobthefish_maybe_display_colors -S
-  if not set -q __bobthefish_display_colors
-    return
-  end
-
+  set -q __bobthefish_display_colors; or return
   set -e __bobthefish_display_colors
 
   echo
@@ -638,7 +838,7 @@ function __bobthefish_maybe_display_colors -S
   echo -n jobs '% '
   __bobthefish_finish_segments
   set_color normal
-  echo -n "(<- color_initial_segment)"
+  echo -n "(<- initial_segment)"
   echo
 
   __bobthefish_start_segment $__color_path
@@ -660,8 +860,7 @@ function __bobthefish_maybe_display_colors -S
   set_color -b $__color_path_basename
   echo -ns basename ' '
   __bobthefish_start_segment $__color_repo
-  echo -ns $__bobthefish_branch_glyph ' '
-  echo -n "color-repo "
+  echo -n "$__bobthefish_branch_glyph repo $__bobthefish_git_stashed_glyph "
   __bobthefish_finish_segments
   echo
 
@@ -670,8 +869,7 @@ function __bobthefish_maybe_display_colors -S
   set_color -b $__color_path_basename
   echo -ns basename ' '
   __bobthefish_start_segment $__color_repo_dirty
-  echo -ns $__bobthefish_branch_glyph ' '
-  echo -n "color-repo-dirty "
+  echo -n "$__bobthefish_tag_glyph repo_dirty $__bobthefish_git_dirty_glyph "
   __bobthefish_finish_segments
   echo
 
@@ -680,8 +878,7 @@ function __bobthefish_maybe_display_colors -S
   set_color -b $__color_path_basename
   echo -ns basename ' '
   __bobthefish_start_segment $__color_repo_staged
-  echo -ns $__bobthefish_branch_glyph ' '
-  echo -n "color-repo-staged "
+  echo -n "$__bobthefish_detached_glyph repo_staged $__bobthefish_git_staged_glyph "
   __bobthefish_finish_segments
   echo
 
@@ -697,28 +894,38 @@ function __bobthefish_maybe_display_colors -S
   echo
 
   __bobthefish_start_segment $__color_vagrant
-  echo -n color_vagrant ' '
+  echo -ns $__bobthefish_vagrant_running_glyph ' ' vagrant ' '
   __bobthefish_finish_segments
   echo
 
   __bobthefish_start_segment $__color_username
-  echo -n color_username ' '
+  echo -n username
+  set_color normal
+  set_color -b $__color_hostname[1] $__color_hostname[2..-1]
+  echo -ns @hostname ' '
   __bobthefish_finish_segments
   echo
 
   __bobthefish_start_segment $__color_rvm
-  echo -n color_rvm ' '
+  echo -ns $__bobthefish_ruby_glyph rvm ' '
   __bobthefish_finish_segments
+
   __bobthefish_start_segment $__color_virtualfish
-  echo -ns color_virtualfish ' '
+  echo -ns $__bobthefish_virtualenv_glyph virtualfish ' '
   __bobthefish_finish_segments
+
+  __bobthefish_start_segment $__color_virtualgo
+  echo -ns $__bobthefish_go_glyph virtualgo ' '
+  __bobthefish_finish_segments
+
   echo -e "\n"
 
 end
 
-# ===========================
+
+# ==============================
 # Apply theme
-# ===========================
+# ==============================
 
 function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
   # Save the last status for later (do this before the `set` calls below)
@@ -726,25 +933,14 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
 
   # Powerline glyphs
   set -l __bobthefish_branch_glyph            \uE0A0
-  set -l __bobthefish_ln_glyph                \uE0A1
-  set -l __bobthefish_padlock_glyph           \uE0A2
   set -l __bobthefish_right_black_arrow_glyph \uE0B0
   set -l __bobthefish_right_arrow_glyph       \uE0B1
   set -l __bobthefish_left_black_arrow_glyph  \uE0B2
   set -l __bobthefish_left_arrow_glyph        \uE0B3
 
-  if [ "$theme_powerline_fonts" = "no" ]
-    set __bobthefish_branch_glyph            \u2387
-    set __bobthefish_ln_glyph                ''
-    set __bobthefish_padlock_glyph           ''
-    set __bobthefish_right_black_arrow_glyph ''
-    set __bobthefish_right_arrow_glyph       ''
-    set __bobthefish_left_black_arrow_glyph  ''
-    set __bobthefish_left_arrow_glyph        ''
-  end
-
   # Additional glyphs
   set -l __bobthefish_detached_glyph          \u27A6
+  set -l __bobthefish_tag_glyph               \u2302
   set -l __bobthefish_nonzero_exit_glyph      '! '
   set -l __bobthefish_superuser_glyph         '$ '
   set -l __bobthefish_bg_job_glyph            '% '
@@ -756,6 +952,7 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
   set -l __bobthefish_pypy_glyph              \u1D56
 
   set -l __bobthefish_ruby_glyph              ''
+  set -l __bobthefish_go_glyph                ''
 
   # Vagrant glyphs
   set -l __bobthefish_vagrant_running_glyph   \u2191 # ↑ 'running'
@@ -764,6 +961,61 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
   set -l __bobthefish_vagrant_saved_glyph     \u21E1 # ⇡ 'saved'
   set -l __bobthefish_vagrant_stopping_glyph  \u21E3 # ⇣ 'stopping'
   set -l __bobthefish_vagrant_unknown_glyph   '!'    # strange cases
+
+  # Git glyphs
+  set -l __bobthefish_git_dirty_glyph      '*'
+  set -l __bobthefish_git_staged_glyph     '~'
+  set -l __bobthefish_git_stashed_glyph    '$'
+  set -l __bobthefish_git_untracked_glyph  '…'
+  set -l __bobthefish_git_ahead_glyph      \u2191 # '↑'
+  set -l __bobthefish_git_behind_glyph     \u2193 # '↓'
+  set -l __bobthefish_git_plus_glyph       '+'
+  set -l __bobthefish_git_minus_glyph      '-'
+  set -l __bobthefish_git_plus_minus_glyph '±'
+
+  # Disable Powerline fonts
+  if [ "$theme_powerline_fonts" = "no" ]
+    set __bobthefish_branch_glyph            \u2387
+    set __bobthefish_right_black_arrow_glyph ''
+    set __bobthefish_right_arrow_glyph       ''
+    set __bobthefish_left_black_arrow_glyph  ''
+    set __bobthefish_left_arrow_glyph        ''
+  end
+
+  # Use prettier Nerd Fonts glyphs
+  if [ "$theme_nerd_fonts" = "yes" ]
+    set __bobthefish_branch_glyph     \uF418
+    set __bobthefish_detached_glyph   \uF417
+    set __bobthefish_tag_glyph        \uF412
+
+    set __bobthefish_virtualenv_glyph \uE73C ' '
+    set __bobthefish_ruby_glyph       \uE791 ' '
+    set __bobthefish_go_glyph         \uE626 ' '
+
+    set __bobthefish_vagrant_running_glyph  \uF431 # ↑ 'running'
+    set __bobthefish_vagrant_poweroff_glyph \uF433 # ↓ 'poweroff'
+    set __bobthefish_vagrant_aborted_glyph  \uF468 # ✕ 'aborted'
+    set __bobthefish_vagrant_unknown_glyph  \uF421 # strange cases
+
+    set __bobthefish_git_dirty_glyph      \uF448 '' # nf-oct-pencil
+    set __bobthefish_git_staged_glyph     \uF0C7 '' # nf-fa-save
+    set __bobthefish_git_stashed_glyph    \uF0C6 '' # nf-fa-paperclip
+    set __bobthefish_git_untracked_glyph  \uF128 '' # nf-fa-question
+    # set __bobthefish_git_untracked_glyph  \uF141 '' # nf-fa-ellipsis_h
+
+    set __bobthefish_git_ahead_glyph      \uF47B # nf-oct-chevron_up
+    set __bobthefish_git_behind_glyph     \uF47C # nf-oct-chevron_down
+
+    set __bobthefish_git_plus_glyph       \uF0DE # fa-sort-asc
+    set __bobthefish_git_minus_glyph      \uF0DD # fa-sort-desc
+    set __bobthefish_git_plus_minus_glyph \uF0DC # fa-sort
+  end
+
+  # Avoid ambiguous glyphs
+  if [ "$theme_avoid_ambiguous_glyphs" = "yes" ]
+    set __bobthefish_git_untracked_glyph '...'
+  end
+
 
   # Colors
 
@@ -795,7 +1047,7 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       # set -g __color_path_nowrite_basename 660000 cc9999 --bold
       #
       # set -g __color_repo                  addc10 0c4801
-      # set -g __color_repo_work_tree        addc10 ffffff --bold
+      # set -g __color_repo_work_tree        333333 ffffff --bold
       # set -g __color_repo_dirty            ce000f ffffff
       # set -g __color_repo_staged           f6b117 3a2a03
       #
@@ -804,9 +1056,11 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       # set -g __color_vi_mode_visual        f6b117 3a2a03 --bold
       #
       # set -g __color_vagrant               48b4fb ffffff --bold
-      # set -g __color_username              cccccc 255e87
+      # set -g __color_username              cccccc 255e87 --bold
+      # set -g __color_hostname              cccccc 255e87
       # set -g __color_rvm                   af0000 cccccc --bold
       # set -g __color_virtualfish           005faf cccccc --bold
+      # set -g __color_virtualgo             005faf cccccc --bold
 
     case 'terminal' 'terminal-dark*'
       set -l colorfg black
@@ -821,7 +1075,7 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_path_nowrite_basename    magenta $colorfg --bold
 
       set __color_repo                     green $colorfg
-      set __color_repo_work_tree           green $colorfg --bold
+      set __color_repo_work_tree           black $colorfg --bold
       set __color_repo_dirty               brred $colorfg
       set __color_repo_staged              yellow $colorfg
 
@@ -830,9 +1084,12 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_vi_mode_visual           bryellow $colorfg --bold
 
       set __color_vagrant                  brcyan $colorfg
-      set __color_username                 white black
+      set __color_k8s                      magenta white --bold
+      set __color_username                 white black --bold
+      set __color_hostname                 white black
       set __color_rvm                      brmagenta $colorfg --bold
       set __color_virtualfish              brblue $colorfg --bold
+      set __color_virtualgo                brblue $colorfg --bold
 
     case 'terminal-light*'
       set -l colorfg white
@@ -847,7 +1104,7 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_path_nowrite_basename    magenta $colorfg --bold
 
       set __color_repo                     green $colorfg
-      set __color_repo_work_tree           green $colorfg --bold
+      set __color_repo_work_tree           white $colorfg --bold
       set __color_repo_dirty               brred $colorfg
       set __color_repo_staged              yellow $colorfg
 
@@ -856,9 +1113,12 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_vi_mode_visual           bryellow $colorfg --bold
 
       set __color_vagrant                  brcyan $colorfg
-      set __color_username                 black white
+      set __color_k8s                      magenta white --bold
+      set __color_username                 black white --bold
+      set __color_hostname                 black white
       set __color_rvm                      brmagenta $colorfg --bold
       set __color_virtualfish              brblue $colorfg --bold
+      set __color_virtualgo                brblue $colorfg --bold
 
     case 'terminal2' 'terminal2-dark*'
       set -l colorfg black
@@ -873,7 +1133,7 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_path_nowrite_basename    magenta $colorfg --bold
 
       set __color_repo                     green $colorfg
-      set __color_repo_work_tree           green $colorfg --bold
+      set __color_repo_work_tree           brgrey $colorfg --bold
       set __color_repo_dirty               brred $colorfg
       set __color_repo_staged              yellow $colorfg
 
@@ -882,9 +1142,12 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_vi_mode_visual           bryellow $colorfg --bold
 
       set __color_vagrant                  brcyan $colorfg
-      set __color_username                 brgrey white
+      set __color_k8s                      magenta white --bold
+      set __color_username                 brgrey white --bold
+      set __color_hostname                 brgrey white
       set __color_rvm                      brmagenta $colorfg --bold
       set __color_virtualfish              brblue $colorfg --bold
+      set __color_virtualgo                brblue $colorfg --bold
 
     case 'terminal2-light*'
       set -l colorfg white
@@ -899,7 +1162,7 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_path_nowrite_basename    magenta $colorfg --bold
 
       set __color_repo                     green $colorfg
-      set __color_repo_work_tree           green $colorfg --bold
+      set __color_repo_work_tree           grey $colorfg --bold
       set __color_repo_dirty               brred $colorfg
       set __color_repo_staged              yellow $colorfg
 
@@ -908,9 +1171,12 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_vi_mode_visual           bryellow $colorfg --bold
 
       set __color_vagrant                  brcyan $colorfg
-      set __color_username                 grey black
+      set __color_k8s                      magenta white --bold
+      set __color_username                 grey black --bold
+      set __color_hostname                 grey black
       set __color_rvm                      brmagenta $colorfg --bold
       set __color_virtualfish              brblue $colorfg --bold
+      set __color_virtualgo                brblue $colorfg --bold
 
     case 'zenburn'
       set -l grey   333333 # a bit darker than normal zenburn grey
@@ -931,7 +1197,7 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_path_nowrite_basename    $grey $red --bold
 
       set __color_repo                     $green $grey
-      set __color_repo_work_tree           $green $grey --bold
+      set __color_repo_work_tree           $grey $grey --bold
       set __color_repo_dirty               $red $grey
       set __color_repo_staged              $yellow $grey
 
@@ -940,9 +1206,12 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_vi_mode_visual           $yellow $grey --bold
 
       set __color_vagrant                  $blue $green --bold
-      set __color_username                 $grey $blue
+      set __color_k8s                      $green $white --bold
+      set __color_username                 $grey $blue --bold
+      set __color_hostname                 $grey $blue
       set __color_rvm                      $red $grey --bold
       set __color_virtualfish              $blue $grey --bold
+      set __color_virtualgo                $blue $grey --bold
 
     case 'base16-light'
       set -l base00 181818
@@ -974,7 +1243,7 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_path_nowrite_basename    $base06 $base08 --bold
 
       set __color_repo                     $base0B $colorfg
-      set __color_repo_work_tree           $base0B $colorfg --bold
+      set __color_repo_work_tree           $base06 $colorfg --bold
       set __color_repo_dirty               $base08 $colorfg
       set __color_repo_staged              $base09 $colorfg
 
@@ -983,9 +1252,12 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_vi_mode_visual           $base09 $colorfg --bold
 
       set __color_vagrant                  $base0C $colorfg --bold
-      set __color_username                 $base02 $base0D
+      set __color_k8s                      $base06 $colorfg --bold
+      set __color_username                 $base02 $base0D --bold
+      set __color_hostname                 $base02 $base0D
       set __color_rvm                      $base08 $colorfg --bold
       set __color_virtualfish              $base0D $colorfg --bold
+      set __color_virtualgo                $base0D $colorfg --bold
 
     case 'base16' 'base16-dark'
       set -l base00 181818
@@ -1017,7 +1289,7 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_path_nowrite_basename    $base02 $base08 --bold
 
       set __color_repo                     $base0B $colorfg
-      set __color_repo_work_tree           $base0B $colorfg --bold
+      set __color_repo_work_tree           $base02 $colorfg --bold
       set __color_repo_dirty               $base08 $colorfg
       set __color_repo_staged              $base09 $colorfg
 
@@ -1026,9 +1298,12 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_vi_mode_visual           $base09 $colorfg --bold
 
       set __color_vagrant                  $base0C $colorfg --bold
-      set __color_username                 $base02 $base0D
+      set __color_k8s                      $base0B $colorfg --bold
+      set __color_username                 $base02 $base0D --bold
+      set __color_hostname                 $base02 $base0D
       set __color_rvm                      $base08 $colorfg --bold
       set __color_virtualfish              $base0D $colorfg --bold
+      set __color_virtualgo                $base0D $colorfg --bold
 
     case 'solarized-light'
       set -l base03  002b36
@@ -1060,7 +1335,7 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_path_nowrite_basename    $base2 $orange --bold
 
       set __color_repo                     $green $colorfg
-      set __color_repo_work_tree           $green $colorfg --bold
+      set __color_repo_work_tree           $base2 $colorfg --bold
       set __color_repo_dirty               $red $colorfg
       set __color_repo_staged              $yellow $colorfg
 
@@ -1069,9 +1344,12 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_vi_mode_visual           $yellow $colorfg --bold
 
       set __color_vagrant                  $violet $colorfg --bold
-      set __color_username                 $base2 $blue
+      set __color_k8s                      $green $colorfg --bold
+      set __color_username                 $base2 $blue --bold
+      set __color_hostname                 $base2 $blue
       set __color_rvm                      $red $colorfg --bold
       set __color_virtualfish              $cyan $colorfg --bold
+      set __color_virtualgo                $cyan $colorfg --bold
 
     case 'solarized' 'solarized-dark'
       set -l base03  002b36
@@ -1103,7 +1381,7 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_path_nowrite_basename    $base02 $orange --bold
 
       set __color_repo                     $green $colorfg
-      set __color_repo_work_tree           $green $colorfg --bold
+      set __color_repo_work_tree           $base02 $colorfg --bold
       set __color_repo_dirty               $red $colorfg
       set __color_repo_staged              $yellow $colorfg
 
@@ -1112,9 +1390,12 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_vi_mode_visual           $yellow $colorfg --bold
 
       set __color_vagrant                  $violet $colorfg --bold
-      set __color_username                 $base02 $blue
+      set __color_k8s                      $green $colorfg --bold
+      set __color_username                 $base02 $blue --bold
+      set __color_hostname                 $base02 $blue
       set __color_rvm                      $red $colorfg --bold
       set __color_virtualfish              $cyan $colorfg --bold
+      set __color_virtualgo                $cyan $colorfg --bold
 
     case 'light'
       #               light  medium dark
@@ -1139,7 +1420,7 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_path_nowrite_basename    $red[1] $red[3] --bold
 
       set __color_repo                     $green[1] $green[3]
-      set __color_repo_work_tree           $green[1] $white --bold
+      set __color_repo_work_tree           $grey[1] $white --bold
       set __color_repo_dirty               $red[2] $white
       set __color_repo_staged              $orange[1] $orange[3]
 
@@ -1148,9 +1429,50 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_vi_mode_visual           $orange[1] $orange[3] --bold
 
       set __color_vagrant                  $blue[1] $white --bold
-      set __color_username                 $grey[1] $blue[3]
+      set __color_k8s                      $green[1] $colorfg --bold
+      set __color_username                 $grey[1] $blue[3] --bold
+      set __color_hostname                 $grey[1] $blue[3]
       set __color_rvm                      $ruby_red $grey[1] --bold
       set __color_virtualfish              $blue[2] $grey[1] --bold
+      set __color_virtualgo                $blue[2] $grey[1] --bold
+
+    case 'gruvbox'
+      #               light  medium  dark  darkest
+      #               ------ ------ ------ -------
+      set -l red      fb4934 cc241d
+      set -l green    b8bb26 98971a
+      set -l yellow   fabd2f d79921
+      set -l aqua     8ec07c 689d6a
+      set -l blue     83a598 458588
+      set -l grey     cccccc 999999 333333
+      set -l fg       fbf1c7 ebdbb2 d5c4a1 a89984
+      set -l bg       504945 282828
+
+      set __color_initial_segment_exit  $fg[1] $red[2] --bold
+      set __color_initial_segment_su    $fg[1] $green[2] --bold
+      set __color_initial_segment_jobs  $fg[1] $aqua[2] --bold
+
+      set __color_path                  $bg[1] $fg[2]
+      set __color_path_basename         $bg[1] $fg[2] --bold
+      set __color_path_nowrite          $red[1] $fg[2]
+      set __color_path_nowrite_basename $red[1] $fg[2] --bold
+
+      set __color_repo                  $green[2] $bg[1]
+      set __color_repo_work_tree        $bg[1] $fg[2] --bold
+      set __color_repo_dirty            $red[2] $fg[2]
+      set __color_repo_staged           $yellow[1] $bg[1]
+
+      set __color_vi_mode_default       $fg[4] $bg[2] --bold
+      set __color_vi_mode_insert        $blue[1] $bg[2] --bold
+      set __color_vi_mode_visual        $yellow[1] $bg[2] --bold
+
+      set __color_vagrant               $blue[2] $fg[2] --bold
+      set __color_k8s                   $green[2] $fg[2] --bold
+      set __color_username              $fg[3] $blue[2] --bold
+      set __color_hostname              $fg[3] $blue[2]
+      set __color_rvm                   $red[2] $fg[2] --bold
+      set __color_virtualfish           $blue[2] $fg[2] --bold
+      set __color_virtualgo             $blue[2] $fg[2] --bold
 
     case '*' # default dark theme
       #               light  medium dark
@@ -1175,7 +1497,7 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_path_nowrite_basename    $red[3] $red[1] --bold
 
       set __color_repo                     $green[1] $green[3]
-      set __color_repo_work_tree           $green[1] $white --bold
+      set __color_repo_work_tree           $grey[3] $white --bold
       set __color_repo_dirty               $red[2] $white
       set __color_repo_staged              $orange[1] $orange[3]
 
@@ -1184,29 +1506,38 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
       set __color_vi_mode_visual           $orange[1] $orange[3] --bold
 
       set __color_vagrant                  $blue[1] $white --bold
-      set __color_username                 $grey[1] $blue[3]
+      set __color_k8s                      $green[2] $white --bold
+      set __color_username                 $grey[1] $blue[3] --bold
+      set __color_hostname                 $grey[1] $blue[3]
       set __color_rvm                      $ruby_red $grey[1] --bold
       set __color_virtualfish              $blue[2] $grey[1] --bold
-  end
-
-  if [ "$theme_nerd_fonts" = "yes" ]
-    set __bobthefish_virtualenv_glyph \uE73C ' '
-    set __bobthefish_ruby_glyph       \uE791 ' '
+      set __color_virtualgo                $blue[2] $grey[1] --bold
   end
 
   # Start each line with a blank slate
   set -l __bobthefish_current_bg
 
+  # Internal: used for testing color schemes
   __bobthefish_maybe_display_colors
 
+  # Status flags and input mode
   __bobthefish_prompt_status $last_status
   __bobthefish_prompt_vi
+
+  # Containers and VMs
   __bobthefish_prompt_vagrant
   __bobthefish_prompt_docker
+  __bobthefish_prompt_k8s_context
+
+  # User / hostname info
   __bobthefish_prompt_user
+
+  # Virtual environments
   __bobthefish_prompt_rubies
   __bobthefish_prompt_virtualfish
+  __bobthefish_prompt_virtualgo
 
+  # VCS
   set -l git_root (__bobthefish_git_project_dir)
   set -l hg_root  (__bobthefish_hg_project_dir)
 
