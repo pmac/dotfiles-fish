@@ -17,26 +17,10 @@ end
 
 # Ruby / Other Local Binaries
 add_user_path "$HOME/bin"
+add_user_path "$HOME/.local/bin"
 
 # Rust / Cargo
 add_user_path "$HOME/.cargo/bin"
-
-# Emscripten
-set -x EM_CONFIG "$HOME/.emscripten"
-set -x EMSCRIPTEN "$HOME/emsdk_portable/emscripten/incoming"
-add_user_path "$HOME/emsdk_portable"
-add_user_path "$HOME/emsdk_portable/clang/fastcomp/build_incoming_64/bin"
-add_user_path "$HOME/emsdk_portable/node/4.1.1_64bit/bin"
-add_user_path "$HOME/emsdk_portable/emscripten/incoming"
-
-# Golang
-add_user_path "$HOME/.gocode/bin"
-for dir in "$HOME/.gocode" "$HOME/Projects/Portier/gocode"
-    set -l dirs (string split : $GOPATH)
-    if test -d $dir; and not contains $dir $dirs
-        set -x GOPATH (string join : $dirs $dir)
-    end
-end
 
 # Use OpenSSL headers from Homebrew on macOS. Necessary for compiling Servo:
 # https://github.com/sfackler/rust-openssl/issues/255
@@ -49,14 +33,15 @@ if test (uname -s) = 'Darwin'; and type -q brew
     end
 end
 
-
-set fish_key_bindings fish_vi_key_bindings
-
 # Prompt customization
 set -x VIRTUAL_ENV_DISABLE_PROMPT 1
 set theme_date_format "+%H:%M:%S"
 set theme_display_vi "yes"
-set theme_display_vi_hide_mode "insert"
+set theme_display_vi_hide_mode "insert" # Removed from upstream :(
 set theme_show_exit_status "yes"
 
-set -e fish_greeting
+# Disable the "Welcome to fish" message...
+set fish_greeting
+
+# Use vi keybinding by default
+set fish_key_bindings fish_vi_key_bindings
