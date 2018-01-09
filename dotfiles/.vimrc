@@ -183,6 +183,7 @@ set wildignore+=*.sw[po]
 set wildignore+=.DS_Store
 set wildignore+=[Tt]humbs.db
 set wildignore+=*.6
+set wildignore+=node_modules/*
 
 " Misc
 au FileType markdown,text setlocal spell textwidth=0 linebreak
