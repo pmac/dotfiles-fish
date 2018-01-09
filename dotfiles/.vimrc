@@ -122,7 +122,7 @@ call plug#begin('~/.vim/plugged')
 
     "Plug 'tpope/vim-fugitive'
     "Plug 'gregsexton/gitv'
-    "Plug 'airblade/vim-gitgutter'
+    Plug 'airblade/vim-gitgutter'
 
     " -- Wiki / Taskwarrior Integration --
 
