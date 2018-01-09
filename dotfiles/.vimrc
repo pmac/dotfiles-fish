@@ -32,8 +32,6 @@ call plug#begin('~/.vim/plugged')
     Plug 'majutsushi/tagbar'
         map <leader>t :TagbarToggle<CR>
 
-    Plug 'fmoralesc/vim-pad'
-        let g:pad#dir = '~/.vim-pad'
     " Plug 'neomake/neomake'
     "     " No auto-make until https://github.com/neomake/neomake/issues/1216
     "     " au BufWritePost * Neomake
@@ -81,7 +79,6 @@ call plug#begin('~/.vim/plugged')
     Plug 'simnalamburt/vim-mundo'
         nnoremap <leader>u :GundoToggle<CR>
     Plug 'junegunn/goyo.vim'
-    Plug 'tpope/vim-fireplace'
 
     " -- Completion --
     " Plug 'autozimu/LanguageClient-neovim', { 'do': ':UpdateRemotePlugins' }
