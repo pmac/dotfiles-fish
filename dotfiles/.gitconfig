@@ -6,6 +6,7 @@
     ci = commit
     st = status
     glog = log --pretty=format:\"%C(yellow)%h %C(cyan)%ad%Cred%d %Creset%s%Cblue [%an]\" --graph --decorate --date=short
+    sclone = clone --depth=1
 [core]
     quotePath = false
     precomposeUnicode = true
