@@ -1559,4 +1559,8 @@ function fish_prompt -d 'bobthefish, a fish theme optimized for awesome'
   end
 
   __bobthefish_finish_segments
+
+  if set -q nohist
+    commandline " "
+  end
 end

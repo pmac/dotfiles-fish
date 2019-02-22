@@ -1,0 +1,2 @@
+--external-downloader aria2c
+--force-ipv4

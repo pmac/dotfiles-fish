@@ -1,4 +1,8 @@
-set -x EDITOR "vim"
+if type -q nvim
+    set -x EDITOR "nvim"
+else
+    set -x EDITOR "vim"
+end
 
 set -x LC_COLLATE "C"
 
@@ -6,6 +10,10 @@ set -x LESS "-F -g -i -M -R -S -w -X -z-4"
 if command -v lesspipe.sh > /dev/null
     set -x LESSOPEN "|lesspipe.sh %s"
 end
+
+# Prevent Wine from generating file associations, desktop links, etc.
+set -x WINEDLLOVERRIDES "winemenubuilder.exe=d"
+set -x WINEARCH win32
 
 function add_user_path --description='Helper for modifying $PATH'
     for path in $argv
@@ -21,6 +29,10 @@ add_user_path "$HOME/.local/bin"
 
 # Rust / Cargo
 add_user_path "$HOME/.cargo/bin"
+
+# Android Studio
+add_user_path "/opt/android-studio/bin"
+set -x ANDROID_HOME "/home/dan/Android/Sdk"
 
 # Use OpenSSL headers from Homebrew on macOS. Necessary for compiling Servo:
 # https://github.com/sfackler/rust-openssl/issues/255

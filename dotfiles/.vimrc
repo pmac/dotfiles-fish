@@ -7,6 +7,7 @@ call plug#begin('~/.vim/plugged')
         let g:lucius_style = 'dark'
         let g:lucius_contrast = 'low'
         let g:lucius_contrast_bg = 'high'
+        let g:lucius_no_term_bg = 1
     Plug 'https://bitbucket.org/kisom/eink.vim.git'
     Plug 'robertmeta/nofrils'
     Plug 'ggustafsson/Static-Color-Scheme'
@@ -50,6 +51,7 @@ call plug#begin('~/.vim/plugged')
     " File Types
     " See sheerun/vim-polyglot for more suggestions
     Plug 'cespare/vim-toml'
+    Plug 'chikamichi/mediawiki.vim'
     Plug 'fatih/vim-go'
         let g:go_fmt_fail_silently = 1
         au BufRead,BufNewFile *.sigil setlocal filetype=gotexttmpl
@@ -71,6 +73,9 @@ call plug#begin('~/.vim/plugged')
     Plug 'tpope/vim-git'
     Plug 'vimoutliner/vimoutliner'
     Plug 'yosssi/vim-ace'
+    Plug 'isobit/vim-caddyfile'
+    Plug 'nginx/nginx', { 'rtp': 'contrib/vim' }
+    Plug 'nathangrigg/vim-beancount'
 
     " == Still Evaluating ==
 
@@ -81,6 +86,7 @@ call plug#begin('~/.vim/plugged')
     Plug 'simnalamburt/vim-mundo'
         nnoremap <leader>u :MundoToggle<CR>
     Plug 'junegunn/goyo.vim'
+    Plug 'chaimleib/vim-renpy'
 
     " -- Completion --
 
@@ -107,7 +113,7 @@ call plug#begin('~/.vim/plugged')
     " NCM seems to work better out-of-the-box, but only supports neovim
 
     if has('nvim')
-        Plug 'roxma/nvim-completion-manager'
+        "Plug 'roxma/nvim-completion-manager'
     endif
 
     " Plug 'Shougo/denite.nvim'
@@ -133,7 +139,7 @@ call plug#begin('~/.vim/plugged')
 
     "Plug 'tpope/vim-fugitive'
     "Plug 'gregsexton/gitv'
-    Plug 'airblade/vim-gitgutter'
+    "Plug 'airblade/vim-gitgutter'
 
     " -- Wiki / Taskwarrior Integration --
 
