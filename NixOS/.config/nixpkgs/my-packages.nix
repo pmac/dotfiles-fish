@@ -5,16 +5,16 @@ let
 in
 
 {
-  # Add ffmpeg to buildInputs to support media playback
-  # https://github.com/NixOS/nixpkgs/pull/56144
-  digikam = super.digikam.overrideAttrs (oldAttrs: {
-    nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ self.ffmpeg ];
-  });
+  # Waiting on https://github.com/NixOS/nixpkgs/pull/59347
+  # Commit hash ee483a6aa8c3acf4b951b7a89038077b8a615197
+  rapid-photo-downloader = callPackage ./pkgs/rapid-photo-downloader/default.nix { };
 
-  # Add systemd to nativeBuildInputs to enable MPRIS
-  cmus = super.cmus.overrideAttrs (oldAttrs: {
-    nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ self.systemd ];
-  });
+  # Gnome Extensions
+  gnomeExtensions = super.gnomeExtensions // {
+    #caffeine-plus = callPackage ./pkgs/gnomeExtensions/caffeine-plus.nix { };
+    syncthing-icon = callPackage ./pkgs/gnomeExtensions/syncthing-icon.nix { };
+    #desktop-icons = callPackage ./pkgs/gnomeExtensions/desktop-icons.nix { };
+  };
 
   # Add WebP support to imlib2
   imlib2 = super.imlib2.overrideAttrs (oldAttrs: {
@@ -51,56 +51,7 @@ in
       };
   });
 
-  # Override rawkit to a newer (unreleased) version that works with Python 3.7
-  # See: https://github.com/NixOS/nixpkgs/issues/26487#issuecomment-307363295
-  python = super.python.override {
-    packageOverrides = pself: psuper: {
-      rawkit = psuper.buildPythonPackage {
-        pname = "rawkit";
-        version = "git-93c3e9b";
-
-        buildInputs = [ self.libraw pself.numpy ];
-
-        checkInputs = [ pself.pytest pself.mock ];
-
-        checkPhase = "py.test tests";
-
-        src = fetchFromGitHub {
-          owner = "photoshell";
-          repo = "rawkit";
-          rev = "93c3e9b6ad0b860081ea8c6f673fb0f021ac1497";
-          sha256 = "1lxizxcds7ga27panv721fayyn67j8hliqx0hqhnc163xvkvfgp2";
-        };
-      };
-    };
-  };
-
-  python3 = super.python3.override {
-    packageOverrides = pself: psuper: {
-      rawkit = psuper.buildPythonPackage {
-        pname = "rawkit";
-        version = "git-93c3e9b";
-
-        buildInputs = [ self.libraw pself.numpy ];
-
-        checkInputs = [ pself.pytest pself.mock ];
-
-        checkPhase = "py.test tests";
-
-        src = fetchFromGitHub {
-          owner = "photoshell";
-          repo = "rawkit";
-          rev = "93c3e9b6ad0b860081ea8c6f673fb0f021ac1497";
-          sha256 = "1lxizxcds7ga27panv721fayyn67j8hliqx0hqhnc163xvkvfgp2";
-        };
-      };
-    };
-  };
-
-  python27Packages = super.recurseIntoAttrs (self.python.pkgs);
-  python37Packages = super.recurseIntoAttrs (self.python3.pkgs);
-
-  # nix-channel --update; nix-env -ir my-env
+  # sudo nix-channel --update; nix-env -ir my-env
   my-env = super.buildEnv {
     name = "my-env";
     paths = with self; [
@@ -108,26 +59,29 @@ in
       calibre
       deluge
       digikam breeze-icons # qt5.qtwayland
+      flameshot
       gimp
       gnome-mpv
       google-chrome
+      inkscape
       keepassxc
       kitty
       latest.firefox-nightly-bin
       libreoffice-fresh
       mpv
       nextcloud-client
-      rapid-photo-downloader exiftool gst_all_1.gstreamer gst_all_1.gstreamer.dev gst_all_1.gst-plugins-base gst_all_1.gst-plugins-good gst_all_1.gst-libav
+      peek
+      # quodlibet-full # Fails to build, https://github.com/NixOS/nixpkgs/issues/53938
+      rapid-photo-downloader
+      simple-scan
+      slack # :-(
       sxiv
+      typora
       vlc
-
-      # Gnome
-      gnomeExtensions.appindicator
-      gnomeExtensions.caffeine
-      gnomeExtensions.topicons-plus
 
       # Development
       docker_compose
+      emacs
       gitAndTools.gitSVN
       gitAndTools.hub
       gitAndTools.tig
@@ -146,6 +100,13 @@ in
       syncthing # TODO: Set up symlinks inside of ~/.config/systemd/user/
       xclip
       youtube-dl aria
-    ];
+    ] ++ (with gnomeExtensions; [
+      appindicator
+      caffeine
+      topicons-plus
+      #caffeine-plus
+      syncthing-icon
+      #desktop-icons
+    ]);
   };
 }
