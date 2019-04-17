@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, glib, zip, unzip, gnome3, systemd }:
+{ stdenv, fetchFromGitHub, glib, zip, unzip, gnome3, systemd, webkitgtk }:
 
 stdenv.mkDerivation rec {
   name = "gnome-shell-extension-syncthing-${version}";
@@ -12,16 +12,20 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [ glib zip unzip ];
-  buildInputs = [ gnome3.gjs systemd ];
+  buildInputs = [ gnome3.gjs webkitgtk systemd ];
 
-  prePatch = ''
+  patches = [
+    ./fix-syncthing-icon.patch
+  ];
+
+  postPatch = ''
     substituteInPlace src/systemd.js \
       --replace "/bin/systemctl" "${systemd}/bin/systemctl"
     substituteInPlace src/extension.js \
       --replace "gjs" "${gnome3.gjs}/bin/gjs"
+    substituteInPlace src/webviewer.js \
+      --subst-var-by webkitPath "${webkitgtk}/lib/girepository-1.0"
   '';
-
-  # Note, this still doesn't work as gjs / gnome3 doesn't depend on webkitgtk
 
   buildPhase = ''
     ./build.sh
