@@ -16,7 +16,8 @@ end
 # Create XDG_DATA_DIRs that we might need
 for name in less bash tig
     [ -d ~/.local/share/$name ]; or mkdir -p ~/.local/share/$name
-end
+end; set -e name
+
 set -x LESSHISTFILE "$HOME/.local/share/less/history"
 set -x HISTFILE "$HOME/.local/share/bash/history"
 
