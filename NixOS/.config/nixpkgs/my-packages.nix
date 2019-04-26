@@ -93,6 +93,7 @@ in
       cmus
       ffmpeg
       highlight
+      hugo
       oathToolkit
       qrencode
       ranger poppler_utils ffmpegthumbnailer imagemagick fontforge sqlite
