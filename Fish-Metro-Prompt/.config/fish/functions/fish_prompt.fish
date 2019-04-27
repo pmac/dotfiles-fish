@@ -89,7 +89,7 @@ function fish_prompt
     end
 
     if test "$status_copy" -ne 0
-        segment red white (set_color -o)" ! "(set_color normal)
+        segment red white (set_color -o)" $status_copy "(set_color normal)
 
     else if last_job_id > /dev/null
         segment white 333 " %% "
