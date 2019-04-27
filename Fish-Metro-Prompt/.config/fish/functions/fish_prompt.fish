@@ -106,13 +106,13 @@ function fish_prompt
     if test "$fish_key_bindings" = "fish_vi_key_bindings"
       switch $fish_bind_mode
         case default
-          segment white red "[N]"
+          segment white red ""
         case insert
-          segment black green "[I]"
+          segment $base_color ""
         case replace-one
-          segment yellow blue "[R]"
+          segment yellow blue ""
         case visual
-          segment white magenta "[V]"
+          segment white magenta ""
       end
     end
 
