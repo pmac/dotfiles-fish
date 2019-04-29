@@ -58,7 +58,7 @@ function fish_prompt
         end
 
         set -l prompt
-        set -l git_ahead (git_ahead "+ " "- " "+- ")
+        set -l git_ahead (git_ahead "+ " "- " "± ")
 
         if test "$branch_name" = master
             set prompt " $git_glyph $git_ahead"
@@ -68,8 +68,7 @@ function fish_prompt
 
         if set -q git_color[3]
             segment "$git_color[3]" "$git_color[4]" "$prompt"
-            segment black black
-            segment "$git_color[1]" "$git_color[2]" " $git_glyph "
+            segment "$git_color[1]" "$git_color[2]"
         else
             segment "$git_color[1]" "$git_color[2]" "$prompt"
         end
