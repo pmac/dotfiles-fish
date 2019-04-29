@@ -28,8 +28,23 @@ function fish_prompt
         set dir "$dir$pwd_info[2]/"
     end
 
+    if test "$fish_key_bindings" = "fish_vi_key_bindings"
+      switch $fish_bind_mode
+        case default
+          segment white red ""
+        case insert
+          segment $base_color ""
+        case replace-one
+          segment yellow blue ""
+        case visual
+          segment white magenta ""
+      end
+    else
+      segment $base_color ""
+    end
+
     if test ! -z "$pwd_info[3]"
-        segment $base_color " $pwd_info[3] "
+        segment $base_color " $pwd_info[3]"
     end
 
     if set branch_name (git_branch_name)
@@ -74,7 +89,10 @@ function fish_prompt
         end
     end
 
-    segment $base_color " $dir"(set_color white)"$base "
+    if test ! -z "$branch_name"
+        set base "$base " # Append extra space if followed by git info
+    end
+    segment $base_color " $dir"(set_color white)"$base"
 
     if test ! -z "$SSH_CLIENT"
         set -l color bbb 222
@@ -102,19 +120,6 @@ function fish_prompt
 
     if [ "$theme_display_ruby" != 'no' ]; and set -q RUBY_VERSION
         segment red fff " "(basename "$RUBY_VERSION")" "
-    end
-
-    if test "$fish_key_bindings" = "fish_vi_key_bindings"
-      switch $fish_bind_mode
-        case default
-          segment white red ""
-        case insert
-          segment $base_color ""
-        case replace-one
-          segment yellow blue ""
-        case visual
-          segment white magenta ""
-      end
     end
 
     segment_close
