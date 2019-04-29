@@ -5,7 +5,7 @@ function git_branch_name -d "Get the name of the current Git branch, tag or sha1
         set -l tag_name (command git describe --tags --exact-match HEAD 2>/dev/null)
 
         if test -z "$tag_name"
-            command git rev-parse --short HEAD 2>/dev/null
+            string match -r '^.{8}' -- (git rev-parse HEAD 2>/dev/null)
         else
             printf "%s\n" "$tag_name"
         end
