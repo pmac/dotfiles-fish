@@ -11,7 +11,9 @@ function fish_prompt
     else if pwd_is_home
         set dir "~/"
     else
-        if test "$PWD" != /
+        if string match -qr "^$HOME" "$PWD"
+            set dir ""
+        else if test "$PWD" != /
             set dir "/"
         end
 
