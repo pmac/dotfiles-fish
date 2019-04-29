@@ -57,9 +57,6 @@ end
 
 # Prompt customization
 set -x VIRTUAL_ENV_DISABLE_PROMPT 1
-set theme_date_format "+%H:%M:%S"
-set theme_display_vi "yes"
-set theme_display_vi_hide_mode "insert" # Removed from upstream :(
 set theme_show_exit_status "yes"
 
 # Disable the "Welcome to fish" message...
