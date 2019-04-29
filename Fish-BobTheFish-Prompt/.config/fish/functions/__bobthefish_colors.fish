@@ -497,7 +497,8 @@ function __bobthefish_colors -S -a color_scheme -d 'Define colors used by bobthe
       set -x color_repo_staged              $orange[1] $orange[3]
 
       set -x color_vi_mode_default          $grey[2] $grey[3] --bold
-      set -x color_vi_mode_insert           $green[2] $grey[3] --bold
+      #set -x color_vi_mode_insert           $green[2] $grey[3] --bold
+      set -x color_vi_mode_insert           $black $grey[3] --bold
       set -x color_vi_mode_visual           $orange[1] $orange[3] --bold
 
       set -x color_vagrant                  $blue[1] $white --bold
