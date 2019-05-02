@@ -5,9 +5,6 @@ let
 in
 
 {
-  # Waiting on https://github.com/NixOS/nixpkgs/pull/59347
-  # Commit hash ee483a6aa8c3acf4b951b7a89038077b8a615197
-  rapid-photo-downloader = callPackage ./pkgs/rapid-photo-downloader/default.nix { };
 
   # Gnome Extensions
   gnomeExtensions = super.gnomeExtensions // {
