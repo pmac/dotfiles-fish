@@ -104,9 +104,10 @@ let
       # This is a fixed derivation, but we still add as a dependency the
       # verification of the checksum.  Thus, this fetch script can only be
       # executed once the verifyAuthenticity script finished successfully.
-      postFetch = ''
-        : # Authenticity Check (${verifyAuthenticity info})
-      '';
+      # FIXME: https://github.com/mozilla/nixpkgs-mozilla/issues/199
+      #postFetch = ''
+      #  : # Authenticity Check (${verifyAuthenticity info})
+      #'';
   };
 
   firefoxVersion = version:
