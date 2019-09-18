@@ -5,11 +5,6 @@ let
 in
 
 {
-  # hg-fast-export.sh: https://github.com/NixOS/nixpkgs/pull/60653
-  gitAndTools = super.gitAndTools // {
-    gitFastExport = callPackage ./pkgs/fast-export/default.nix { };
-  };
-
   # Gnome Extensions
   gnomeExtensions = super.gnomeExtensions // {
     #caffeine-plus = callPackage ./pkgs/gnomeExtensions/caffeine-plus.nix { };
