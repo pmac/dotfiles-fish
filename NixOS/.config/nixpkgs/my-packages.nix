@@ -32,32 +32,17 @@ in
       patches = (oldAttrs.patches or []) ++ [ ./pkgs/imlib2/webp.patch ];
   });
 
-  # Update Gnome MPV (soon to be renamed Celluloid)
-  gnome-mpv = super.gnome-mpv.overrideAttrs (oldAttrs: {
-      name = "gnome-mpv-0.16";
-      version = "0.16";
-
-      doCheck = false;
-
-      src = fetchFromGitHub {
-          owner = "celluloid-player";
-          repo = "celluloid";
-          rev = "v0.16";
-          sha256 = "1fj5mr1dwd07jpnigk7z85xdm6yaf7spbvf60aj3mz12m05b1b2w";
-      };
-  });
-
   # sudo nix-channel --update; nix-env -ir my-env
   my-env = super.buildEnv {
     name = "my-env";
     paths = with self; [
       # GUI Applications
       calibre
+      celluloid
       deluge
       digikam breeze-icons # qt5.qtwayland
       flameshot
       gimp
-      gnome-mpv
       google-chrome
       inkscape
       keepassxc
