@@ -54,12 +54,13 @@ in
       # quodlibet-full # Fails to build, https://github.com/NixOS/nixpkgs/issues/53938
       rapid-photo-downloader
       simple-scan
-      slack # :-(
       sxiv
       typora
       vlc
+      zoom-us
 
       # Development
+      devd
       docker_compose
       emacs
       gitAndTools.gitSVN
@@ -73,8 +74,9 @@ in
       cmus
       ffmpeg
       highlight
-      hugo
       oathToolkit
+      pdftk
+      qpdf
       qrencode
       ranger poppler_utils ffmpegthumbnailer imagemagick fontforge sqlite
       stow
