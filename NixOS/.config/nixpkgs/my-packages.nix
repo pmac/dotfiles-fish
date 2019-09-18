@@ -7,7 +7,6 @@ in
 {
   # Gnome Extensions
   gnomeExtensions = super.gnomeExtensions // {
-    #caffeine-plus = callPackage ./pkgs/gnomeExtensions/caffeine-plus.nix { };
     syncthing-icon = callPackage ./pkgs/gnomeExtensions/syncthing-icon.nix { };
     desktop-icons = callPackage ./pkgs/gnomeExtensions/desktop-icons.nix { };
   };
@@ -86,7 +85,6 @@ in
       appindicator
       caffeine
       topicons-plus
-      #caffeine-plus
       syncthing-icon
       desktop-icons
     ]);
