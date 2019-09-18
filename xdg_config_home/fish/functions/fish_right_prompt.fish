@@ -1,1 +1,0 @@
-prompts/bobthefish-right.fish

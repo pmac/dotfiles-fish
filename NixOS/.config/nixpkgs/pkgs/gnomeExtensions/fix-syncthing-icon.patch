@@ -1,0 +1,12 @@
+diff --git a/src/webviewer.js b/src/webviewer.js
+index 1ae1261..8d9cf46 100644
+--- a/src/webviewer.js
++++ b/src/webviewer.js
+@@ -1,5 +1,7 @@
+ "use strict";
+ 
++imports.gi.GIRepository.Repository.prepend_search_path('@webkitPath@');
++
+ const Gio = imports.gi.Gio;
+ const Gtk = imports.gi.Gtk;
+ const Lang = imports.lang;
