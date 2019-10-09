@@ -1,3 +1,6 @@
+# Set up Nix
+fenv source '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+
 if type -q nvim
     set -x EDITOR "nvim"
 else
