@@ -1,27 +1,31 @@
 { config, lib, pkgs, ... }:
 
 {
-  imports =
-    [ <nixpkgs/nixos/modules/installer/scan/not-detected.nix>
-    ];
-
   # Host
   networking.hostName = "meta";
   time.timeZone = "Europe/Belfast";
+
+  # Nix Daemon
   nix.maxJobs = lib.mkDefault 4;
-  powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
+  nix.autoOptimiseStore = true;
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 30d";
+  };
+  system.autoUpgrade.enable = true;
+
+  # Power Management
   services.tlp.enable = true;
+  services.thermald.enable = true;
+  powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
 
   # Hardware
   #   https://github.com/NixOS/nixos-hardware/blob/master/common/cpu/intel/default.nix
   hardware.enableRedistributableFirmware = true;
   hardware.cpu.intel.updateMicrocode = true;
   hardware.opengl.s3tcSupport = true;
-  hardware.opengl.extraPackages = with pkgs; [
-    vaapiIntel
-    vaapiVdpau
-    libvdpau-va-gl
-  ];
+  hardware.opengl.extraPackages = with pkgs; [ vaapiIntel vaapiVdpau libvdpau-va-gl intel-media-driver ];
   services.xserver.useGlamor = true;
 
   # Boot
@@ -39,6 +43,7 @@
     "i915.fastboot=1"   # Avoid modesets until we're in a graphical environment
   ];
 
+  # Self-Encrypting Drive (OPAL 2.0 SED)
   nixpkgs.config.packageOverrides = pkgs: {
     sedutil = (pkgs.sedutil.overrideAttrs (oldAttrs: {
       patches = (oldAttrs.patches or []) ++ [
@@ -50,21 +55,6 @@
         })
       ];
     }));
-
-    # Fix Intel VAAPI
-    # See: https://github.com/NixOS/nixpkgs/pull/55976
-    vaapiIntel = pkgs.vaapiIntel.overrideAttrs (oldAttrs: {
-        name = "intel-vaapi-driver-git-20190211";
-        version = "git-20190211";
-        rev = "329975c63123610fc750241654a3bd18add75beb";
-
-        src = pkgs.fetchFromGitHub {
-            owner = "intel";
-            repo = "intel-vaapi-driver";
-            rev = "329975c63123610fc750241654a3bd18add75beb";
-            sha256 = "10333wh2d0hvz5lxl3gjvqs71s7v9ajb0269b3bj5kbflj03v3n5";
-        };
-    });
   };
 
   environment.systemPackages = [ pkgs.sedutil ];
@@ -73,7 +63,7 @@
     description = "Enable S3 sleep on OPAL self-encrypting drives";
     documentation = [ "https://github.com/Drive-Trust-Alliance/sedutil/pull/190" ];
     path = [ pkgs.sedutil ];
-    script = "sedutil-cli -n -x --prepareForS3Sleep 0 ***REMOVED*** /dev/nvme0n1";
+    script = "sedutil-cli -n -x --prepareForS3Sleep 0 ${(import ./secrets.nix).diskPasswordHash} /dev/nvme0n1";
     wantedBy = [ "multi-user.target" ];
   };
 
@@ -89,7 +79,6 @@
   '';
 
   # Filesystems
-  #   Note: Set "discard" option on btrfs mounts if not using fstrim service
   services.fstrim.enable = true;
 
   fileSystems."/" =
