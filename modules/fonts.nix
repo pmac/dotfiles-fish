@@ -34,5 +34,9 @@
       #inconsolata-lgc
       #input-fonts
       #monoid
+
+      # Other Fonts
+      noto-fonts
+      noto-fonts-cjk
   ];
 }
