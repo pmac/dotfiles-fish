@@ -5,6 +5,15 @@
   networking.hostName = "meta";
   time.timeZone = "Europe/Belfast";
 
+  # Randomize MAC addresses (stable hashing per connection, resets each boot)
+  networking.networkmanager.ethernet.macAddress = "stable";
+  networking.networkmanager.wifi.macAddress = "stable";
+  networking.networkmanager.extraConfig = ''
+    [connection]
+    connection.stable-id=''${CONNECTION}/''${BOOT}
+  '';
+
+
   # Nix Daemon
   nix.maxJobs = lib.mkDefault 4;
   nix.autoOptimiseStore = true;
