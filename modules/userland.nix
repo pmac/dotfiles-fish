@@ -53,6 +53,7 @@
     zip
 
     # Backup
+    borgbackup
     restic
 
     # Other
