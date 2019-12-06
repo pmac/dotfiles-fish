@@ -72,6 +72,7 @@
     description = "Enable S3 sleep on OPAL self-encrypting drives";
     documentation = [ "https://github.com/Drive-Trust-Alliance/sedutil/pull/190" ];
     path = [ pkgs.sedutil ];
+    # Note: Generate password hash with: sedutil-cli --printPasswordHash PASSWORD /dev/nvme0n1
     script = "sedutil-cli -n -x --prepareForS3Sleep 0 ${(import ./secrets.nix).diskPasswordHash} /dev/nvme0n1";
     wantedBy = [ "multi-user.target" ];
   };
@@ -91,23 +92,23 @@
   services.fstrim.enable = true;
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/96013bca-b5f2-41b5-9aef-b7332ef60c16";
+    { device = "/dev/disk/by-uuid/53858a4b-8085-4d3e-966f-31dcc9176024";
       fsType = "btrfs";
       options = [ "noatime,subvol=root" ];
     };
 
   fileSystems."/home" =
-    { device = "/dev/disk/by-uuid/96013bca-b5f2-41b5-9aef-b7332ef60c16";
+    { device = "/dev/disk/by-uuid/53858a4b-8085-4d3e-966f-31dcc9176024";
       fsType = "btrfs";
       options = [ "noatime,subvol=home" ];
     };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/0179-3A6F";
+    { device = "/dev/disk/by-uuid/A890-68BC";
       fsType = "vfat";
     };
 
   swapDevices =
-    [ { device = "/dev/disk/by-uuid/7a723fc5-90f6-406d-9858-18f61291c9da"; }
+    [ { device = "/dev/disk/by-uuid/475d3b05-809c-4f62-bc4a-5a1136337fcc"; }
     ];
 }
