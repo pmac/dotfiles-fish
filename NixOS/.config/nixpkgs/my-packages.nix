@@ -38,6 +38,7 @@ in
       peek
       # quodlibet-full # Fails to build, https://github.com/NixOS/nixpkgs/issues/53938
       rapid-photo-downloader
+      scribus
       simple-scan
       sxiv
       typora
