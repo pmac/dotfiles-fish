@@ -66,7 +66,7 @@ in
       qrencode
       ranger poppler_utils ffmpegthumbnailer imagemagick fontforge sqlite
       stow
-      syncthing # TODO: Set up symlinks inside of ~/.config/systemd/user/
+      syncthing
       xclip
       youtube-dl aria
     ] ++ (with gnomeExtensions; [
