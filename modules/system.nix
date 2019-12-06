@@ -29,14 +29,21 @@
   networking.firewall.enable = true;
 
   networking.firewall.allowedTCPPorts = [
-    # Sonos: https://github.com/janbar/noson-app/issues/9
-    1400 1401 1402 1403 1404 1405 1406 1407 1408 1409 3400 3401 3500
-
-    # VLC -> Chromecast streaming
-    8010
+    8010  # VLC -> Chromecast streaming
+    #3400 3401 3500  # Noson (SONOS Controller)
   ];
 
-  networking.firewall.allowedUDPPorts = [ 1900 1901 ];
+  networking.firewall.allowedTCPPortRanges = [
+    { from = 1400; to = 1410; }  # Noson (SONOS Controller)
+  ];
+
+  networking.firewall.allowedUDPPorts = [
+    #1900 1901  # Noson (SONOS Controller)
+  ];
+
+  networking.firewall.allowedUDPPortRanges = [
+    { from = 32768; to = 60999; }  # Ephemeral ports (also needed by Noson)
+  ];
 
   # MDN Development
   networking.hosts = {
