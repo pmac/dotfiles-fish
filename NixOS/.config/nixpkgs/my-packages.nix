@@ -11,25 +11,10 @@ in
     desktop-icons = callPackage ./pkgs/gnomeExtensions/desktop-icons.nix { };
   };
 
-  # Add WebP support to imlib2
-  imlib2 = super.imlib2.overrideAttrs (oldAttrs: {
-      src = super.fetchurl {
-          url = "https://git.enlightenment.org/legacy/imlib2.git/snapshot/imlib2-1.5.1.tar.gz";
-          sha256 = "1gpsd6kxa35gz2x6lc87yy2id25az42vkbcxbnm73cvaqaxvi7p2";
-      };
-
-      nativeBuildInputs = oldAttrs.nativeBuildInputs ++ (with self; [
-        automake autoconf libtool
-      ]);
-
-      buildInputs = oldAttrs.buildInputs ++ [ self.libwebp ];
-
-      preConfigure = ''
-        ./autogen.sh
-      '';
-
-      patches = (oldAttrs.patches or []) ++ [ ./pkgs/imlib2/webp.patch ];
-  });
+  # Build sxiv with a patched Imlib2 to support WebP images
+  sxiv = super.sxiv.override {
+    imlib2 = callPackage ./pkgs/imlib2_webp { };
+  };
 
   # sudo nix-channel --update; nix-env -ir my-env
   my-env = super.buildEnv {
