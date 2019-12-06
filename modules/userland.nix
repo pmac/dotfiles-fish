@@ -18,7 +18,6 @@
     curl
     file
     git
-    gnupg
     lesspipe
     lsof
     psmisc # pstree, killall, ...
@@ -60,6 +59,9 @@
     ispell
     hunspellDicts.en-us
   ];
+
+  # GnuPG (GPG)
+  programs.gnupg.agent.enable = true;
 
   # Docker
   virtualisation.docker.enable = true;
