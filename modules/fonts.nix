@@ -38,5 +38,6 @@
       # Other Fonts
       noto-fonts
       noto-fonts-cjk
+      zilla-slab
   ];
 }
