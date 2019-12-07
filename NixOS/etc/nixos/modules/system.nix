@@ -20,11 +20,6 @@
   i18n.consoleUseXkbConfig = true;
   services.xserver.xkbOptions = "ctrl:nocaps";
 
-  # MAC Address Randomization (During Scans)
-  #  On by default in upstream NetworkManager 1.2, but disabled in NixOS
-  #  See: https://blogs.gnome.org/thaller/2016/08/26/mac-address-spoofing-in-networkmanager-1-4-0/
-  networking.networkmanager.wifi.scanRandMacAddress = true;
-
   # Firewall
   networking.firewall.enable = true;
 
