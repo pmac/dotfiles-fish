@@ -74,6 +74,7 @@ call plug#begin('~/.cache/nvim/plugged')
         nnoremap <leader>u :MundoToggle<CR>
     Plug 'junegunn/goyo.vim'
     Plug 'chaimleib/vim-renpy'
+    Plug 'powerman/vim-plugin-ansiesc'
 
     " -- File / Filename Searching --
 
