@@ -76,7 +76,7 @@ function fish_prompt
         set -l git_ahead (git_ahead "+" "-" "±")
 
         if test "$branch_name" = master
-            set prompt "$git_glyph $git_ahead"
+            set prompt " $git_glyph $git_ahead"
         else
             set prompt " $git_glyph $branch_name $git_ahead "
         end

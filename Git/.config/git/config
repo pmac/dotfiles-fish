@@ -1,17 +1,43 @@
 [user]
-    name = Dan Callahan
-    email = dan.callahan@gmail.com
-    signingKey = 7AA5DAD1C95640B8DE88D4AF8D6DD713E9EBA7FD
+    name = Paul McLanahan
+    email = pmac@mozilla.com
+    signingKey = 210CEF9FE25F97CC
 [alias]
+    co = checkout
     ci = commit
-    st = status
+    st = status -sb
+    su = submodule update --init --recursive
+    lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+    pr = pull-request
+    lol = log --graph --decorate --pretty=oneline --abbrev-commit
+    lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+    pullify = config --add remote.origin.fetch '+refs/pull/*/head:refs/remotes/origin/pr/*'
+    fpr = "!f() { git fetch -fu origin refs/pull/$1/head:pr/$1; } ; f"
+    fprr = "!f() { git fetch -fu $1 refs/pull/$2/head:pr/$2; } ; f"
+    pr-clean = "!git for-each-ref refs/heads/pr/* --format='%(refname)' | while read ref ; do branch=${ref#refs/heads/} ; git branch -D $branch ; done"
+    here = rev-parse --abbrev-ref HEAD
+    hash = rev-parse --short HEAD
+    longhash = rev-parse HEAD
+    bloglog = log --no-merges --since=2.weeks --pretty=format:'%h - %ad - %an - %s' --date=short
+    dad = !curl https://icanhazdadjoke.com/ && git add
     glog = log --pretty=format:\"%C(yellow)%h %C(cyan)%ad%Cred%d %Creset%s%Cblue [%an]\" --graph --decorate --date=short
     sclone = clone --depth=1
 [core]
     quotePath = false
     precomposeUnicode = true
+    excludesfile = ~/.gitignore
+    editor = vim
+[color]
+    diff = auto
+    status = auto
+    branch = auto
+    interactive = auto
 [push]
-    default = simple
+    default = current
+[branch]
+    autosetuprebase = always
+[rebase]
+    autosquash = true
 [diff]
     indentHeuristic = true
 [commit]
@@ -21,3 +47,4 @@
     program = gpg2
 [merge]
     conflictstyle = diff3
+    noprefix = true

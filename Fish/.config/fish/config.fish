@@ -1,8 +1,8 @@
 # Set up Nix
-fenv source '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+#fenv source '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
 
 # Stay in Fish after calling `nix-shell` or `nix run`
-any-nix-shell fish --info-right | source
+#any-nix-shell fish --info-right | source
 
 if type -q nvim
     set -x EDITOR "nvim"
@@ -17,19 +17,8 @@ if command -v lesspipe.sh > /dev/null
     set -x LESSOPEN "|lesspipe.sh %s"
 end
 
-# XDG-ification
-# See: https://wiki.archlinux.org/index.php/XDG_Base_Directory
-# Create XDG_DATA_DIRs that we might need
-for name in less bash tig
-    [ -d ~/.local/share/$name ]; or mkdir -p ~/.local/share/$name
-end; set -e name
-
 set -x LESSHISTFILE "$HOME/.local/share/less/history"
 set -x HISTFILE "$HOME/.local/share/bash/history"
-
-# Prevent Wine from generating file associations, desktop links, etc.
-set -x WINEDLLOVERRIDES "winemenubuilder.exe=d"
-set -x WINEARCH win32
 
 function add_user_path --description='Helper for modifying $PATH'
     for path in $argv
@@ -45,10 +34,6 @@ add_user_path "$HOME/.local/bin"
 
 # Rust / Cargo
 add_user_path "$HOME/.cargo/bin"
-
-# Android Studio
-add_user_path "/opt/android-studio/bin"
-set -x ANDROID_HOME "/home/dan/Android/Sdk"
 
 # Use OpenSSL headers from Homebrew on macOS. Necessary for compiling Servo:
 # https://github.com/sfackler/rust-openssl/issues/255
