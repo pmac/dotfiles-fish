@@ -25,7 +25,7 @@
 [core]
     quotePath = false
     precomposeUnicode = true
-    excludesfile = ~/.gitignore
+    excludesfile = ~/.config/git/ignore
     editor = vim
 [color]
     diff = auto

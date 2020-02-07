@@ -1,0 +1,14 @@
+.idea/
+.ipython
+.vscode/
+.DS_Store
+.svn
+Thumbs.db
+*~
+*.tmproj
+*.pyc
+working/
+local_settings.py
+test_:memory:
+.stfolder
+.venv
