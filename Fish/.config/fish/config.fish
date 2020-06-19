@@ -74,3 +74,5 @@ function set_tmux_window_default --on-event virtualenv_did_deactivate
 end
 
 source ~/.config/fish/aliases.fish
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/pmac/google-cloud-sdk/path.fish.inc' ]; . '/Users/pmac/google-cloud-sdk/path.fish.inc'; end
