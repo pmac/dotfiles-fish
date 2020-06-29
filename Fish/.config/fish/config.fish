@@ -59,7 +59,7 @@ set fish_key_bindings fish_vi_key_bindings
 # virtualfish https://virtualfish.readthedocs.io/en/latest/install.html
 set -x PROJECT_HOME ~/Projects
 set -x VIRTUALFISH_COMPAT_ALIASES 1
-eval (python3 -m virtualfish compat_aliases auto_activation projects)
+# eval (python3 -m virtualfish compat_aliases auto_activation projects)
 
 function set_tmux_window_name --on-event virtualenv_did_activate
     set -x PYTHONDONTWRITEBYTECODE 1
