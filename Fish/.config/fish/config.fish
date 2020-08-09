@@ -19,6 +19,7 @@ end
 
 set -x LESSHISTFILE "$HOME/.local/share/less/history"
 set -x HISTFILE "$HOME/.local/share/bash/history"
+set -x TOOLKIT_SHARED "$HOME/moz-toolkit"
 
 function add_user_path --description='Helper for modifying $PATH'
     for path in $argv
@@ -60,6 +61,9 @@ set fish_key_bindings fish_vi_key_bindings
 set -x PROJECT_HOME ~/Projects
 set -x VIRTUALFISH_COMPAT_ALIASES 1
 # eval (python3 -m virtualfish compat_aliases auto_activation projects)
+
+# GH - GitHub CLI completion
+eval (gh completion -s fish)
 
 function set_tmux_window_name --on-event virtualenv_did_activate
     set -x PYTHONDONTWRITEBYTECODE 1
