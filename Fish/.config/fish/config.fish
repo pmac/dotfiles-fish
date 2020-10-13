@@ -77,6 +77,8 @@ function set_tmux_window_default --on-event virtualenv_did_deactivate
     tmux set-window-option automatic-rename "on" 1>/dev/null
 end
 
+set -x KUBECONFIG "$HOME/.kube/config:$HOME/Projects/infra-private/k8s/clusters/frankfurt/frankfurt-vpn.kubeconfig"
+
 source ~/.config/fish/aliases.fish
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/pmac/google-cloud-sdk/path.fish.inc' ]; . '/Users/pmac/google-cloud-sdk/path.fish.inc'; end
