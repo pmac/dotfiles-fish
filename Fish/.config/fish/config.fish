@@ -4,16 +4,10 @@
 # Stay in Fish after calling `nix-shell` or `nix run`
 #any-nix-shell fish --info-right | source
 
-if type -q nvim
-    set -x EDITOR "nvim"
-else
-    set -x EDITOR "vim"
-end
-
-set -x LC_COLLATE "C"
+set -x LC_COLLATE C
 
 set -x LESS "-F -g -i -M -R -S -w -X -z-4"
-if command -v lesspipe.sh > /dev/null
+if command -v lesspipe.sh >/dev/null
     set -x LESSOPEN "|lesspipe.sh %s"
 end
 
@@ -37,12 +31,25 @@ add_user_path "$HOME/.local/bin"
 add_user_path "$HOME/.cargo/bin"
 
 # MySQL Client
-add_user_path "/usr/local/opt/mysql-client/bin"
+add_user_path /usr/local/opt/mysql-client/bin
+
+# Homebrew
+eval (/opt/homebrew/bin/brew shellenv)
+
+if type -q hx
+    set -x EDITOR hx
+else
+    set -x EDITOR vim
+end
+
+if status is-interactive
+    atuin init fish | source
+end
 
 # Use OpenSSL headers from Homebrew on macOS. Necessary for compiling Servo:
 # https://github.com/sfackler/rust-openssl/issues/255
 # https://github.com/servo/servo/issues/7930
-if test (uname -s) = 'Darwin'; and type -q brew
+if test (uname -s) = Darwin; and type -q brew
     set -l base (brew --prefix openssl)
     if test -d $base
         set -x DEP_OPENSSL_INCLUDE "$base/include"
@@ -52,7 +59,7 @@ end
 
 # Prompt customization
 set -x VIRTUAL_ENV_DISABLE_PROMPT 1
-set theme_show_exit_status "yes"
+set theme_show_exit_status yes
 
 # Disable the "Welcome to fish" message...
 set fish_greeting
@@ -68,9 +75,6 @@ set -x VIRTUALFISH_COMPAT_ALIASES 1
 # GH - GitHub CLI completion
 eval (gh completion -s fish)
 
-# pyenv
-pyenv init - | source
-
 function set_tmux_window_name --on-event virtualenv_did_activate
     set -x PYTHONDONTWRITEBYTECODE 1
     set -x PYTHONUNBUFFERED 1
@@ -80,7 +84,7 @@ end
 function set_tmux_window_default --on-event virtualenv_did_deactivate
     set -e PYTHONDONTWRITEBYTECODE
     set -e PYTHONUNBUFFERED
-    tmux set-window-option automatic-rename "on" 1>/dev/null
+    tmux set-window-option automatic-rename on 1>/dev/null
 end
 
 set -x KUBECONFIG "$HOME/.kube/config:$HOME/.kube/mozmeao-or:$HOME/.kube/mozmeao-fr"
@@ -89,4 +93,8 @@ source ~/.config/fish/aliases.fish
 # fish_add_path /usr/local/opt/node@12/bin
 
 # The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/pmac/google-cloud-sdk/path.fish.inc' ]; . '/Users/pmac/google-cloud-sdk/path.fish.inc'; end
+if [ -f '/Users/pmac/google-cloud-sdk/path.fish.inc' ]
+    . '/Users/pmac/google-cloud-sdk/path.fish.inc'
+end
+uv generate-shell-completion fish | source
+uvx --generate-shell-completion fish | source

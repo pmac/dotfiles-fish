@@ -77,8 +77,10 @@ end
 # git aliases from prezto
 # Log
 set _git_log_medium_format '%C(bold)Commit:%C(reset) %C(green)%H%C(red)%d%n%C(bold)Author:%C(reset) %C(cyan)%an <%ae>%n%C(bold)Date:%C(reset)   %C(blue)%ai (%ar)%C(reset)%n%+B'
-set _git_log_oneline_format '%C(green)%h%C(reset) %s%C(red)%d%C(reset)%n'
+#set _git_log_oneline_format '%C(green)%h%C(reset) %s%C(red)%d%C(reset)%n'
+set _git_log_oneline_format '%C(yellow)%h%C(reset) %s %C(cyan)%cd%C(reset) %C(blue)%an%C(reset) %C(green)%d%C(reset)'
 set _git_log_brief_format '%C(green)%h%C(reset) %s%n%C(blue)(%ar by %an)%C(red)%d%C(reset)%n'
+set _git_log_date_format '%a %b %e, %Y'
 
 # Git
 alias g='git'
@@ -238,14 +240,15 @@ alias gix='git rm -r --cached'
 alias giX='git rm -rf --cached'
 
 # Log (l)
-alias gl='git log --topo-order --pretty=format:"$_git_log_medium_format"'
-alias gls='git log --topo-order --stat --pretty=format:"$_git_log_medium_format"'
-alias gld='git log --topo-order --stat --patch --full-diff --pretty=format:"$_git_log_medium_format"'
-alias glo='git log --topo-order --pretty=format:"$_git_log_oneline_format"'
-alias glg='git log --topo-order --all --graph --pretty=format:"$_git_log_oneline_format"'
-alias glb='git log --topo-order --pretty=format:"$_git_log_brief_format"'
+alias gl='git log --date=format:"$_git_log_date_format" --topo-order --pretty=format:"$_git_log_medium_format"'
+alias gls='git log --date=format:"$_git_log_date_format" --topo-order --stat --pretty=format:"$_git_log_medium_format"'
+alias gld='git log --date=format:"$_git_log_date_format" --topo-order --stat --patch --full-diff --pretty=format:"$_git_log_medium_format"'
+alias gll='git log --date=format:"$_git_log_date_format" --graph --pretty=format:"$_git_log_oneline_format"'
+alias glo='git log --date=format:"$_git_log_date_format" --topo-order --pretty=format:"$_git_log_oneline_format"'
+alias glg='git log --date=format:"$_git_log_date_format" --topo-order --all --graph --pretty=format:"$_git_log_oneline_format"'
+alias glb='git log --date=format:"$_git_log_date_format" --topo-order --pretty=format:"$_git_log_brief_format"'
 alias glc='git shortlog --summary --numbered'
-alias glS='git log --show-signature'
+alias glS='git log --date=format:"$_git_log_date_format" --show-signature'
 
 # Merge (m)
 alias gm='git merge'
