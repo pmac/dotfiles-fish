@@ -1,6 +1,6 @@
 [user]
     name = Paul McLanahan
-    email = pmac@mozilla.com
+    email = pmac@users.noreply.github.com
     signingKey = 210CEF9FE25F97CC
 [alias]
     co = checkout

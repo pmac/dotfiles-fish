@@ -6,6 +6,9 @@
 
 set -x LC_COLLATE C
 
+set -x LDFLAGS "-L/opt/homebrew/opt/zlib/lib"
+set -x CPPFLAGS "-I/opt/homebrew/opt/zlib/include"
+
 set -x LESS "-F -g -i -M -R -S -w -X -z-4"
 if command -v lesspipe.sh >/dev/null
     set -x LESSOPEN "|lesspipe.sh %s"
@@ -44,6 +47,7 @@ end
 
 if status is-interactive
     atuin init fish | source
+    starship init fish | source
 end
 
 # Use OpenSSL headers from Homebrew on macOS. Necessary for compiling Servo:
@@ -87,6 +91,13 @@ function set_tmux_window_default --on-event virtualenv_did_deactivate
     tmux set-window-option automatic-rename on 1>/dev/null
 end
 
+function nvm
+  bass source (brew --prefix nvm)/nvm.sh --no-use ';' nvm $argv
+end
+
+set -x NVM_DIR ~/.nvm
+nvm use default --silent
+
 set -x KUBECONFIG "$HOME/.kube/config:$HOME/.kube/mozmeao-or:$HOME/.kube/mozmeao-fr"
 
 source ~/.config/fish/aliases.fish
@@ -98,3 +109,4 @@ if [ -f '/Users/pmac/google-cloud-sdk/path.fish.inc' ]
 end
 uv generate-shell-completion fish | source
 uvx --generate-shell-completion fish | source
+
