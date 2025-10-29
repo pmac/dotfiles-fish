@@ -1,7 +1,7 @@
 [user]
     name = Paul McLanahan
-    email = pmac@users.noreply.github.com
-    signingKey = 210CEF9FE25F97CC
+	email = paul@mclanahan.net
+    signingKey = CF627227AFFF35C8
 [alias]
     co = checkout
     ci = commit

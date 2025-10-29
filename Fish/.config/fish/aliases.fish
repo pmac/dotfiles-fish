@@ -51,7 +51,7 @@ alias grbm='git rebase main'
 alias grbim='git rebase -i main'
 alias git-delete-merged='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d'
 alias gcmgl='gco main && git pull --ff-only'
-alias gpf='git push -f'
+alias gcmglrb='gcmgl && gco - && grbm'
 alias gppf='gpf pmac'
 alias gpr='gh pr create -f'
 alias gprd='gh pr create -fd'
@@ -71,7 +71,7 @@ alias randompasswd='dd if=/dev/urandom bs=1 count=48 | base64'
 alias dokku='$HOME/src/dokku/contrib/dokku_client.sh'
 
 function whothefuckisusingport -a port --description='Help figure out what is using a port'
-  lsof -i tcp:$port
+    lsof -i tcp:$port
 end
 
 # git aliases from prezto

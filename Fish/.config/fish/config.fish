@@ -36,6 +36,9 @@ add_user_path "$HOME/.cargo/bin"
 # MySQL Client
 add_user_path /usr/local/opt/mysql-client/bin
 
+# PyCharm
+add_user_path /Applications/PyCharm.app/Contents/MacOS
+
 # Homebrew
 eval (/opt/homebrew/bin/brew shellenv)
 
@@ -90,13 +93,6 @@ function set_tmux_window_default --on-event virtualenv_did_deactivate
     set -e PYTHONUNBUFFERED
     tmux set-window-option automatic-rename on 1>/dev/null
 end
-
-function nvm
-  bass source (brew --prefix nvm)/nvm.sh --no-use ';' nvm $argv
-end
-
-set -x NVM_DIR ~/.nvm
-nvm use default --silent
 
 set -x KUBECONFIG "$HOME/.kube/config:$HOME/.kube/mozmeao-or:$HOME/.kube/mozmeao-fr"
 
